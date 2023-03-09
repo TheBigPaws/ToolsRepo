@@ -52,6 +52,8 @@ public:
 	void ClearDisplayList();
 
 
+	int MousePicking();
+
 #ifdef DXTK_AUDIO
 	void NewAudioDevice();
 #endif
@@ -72,6 +74,9 @@ private:
 
 	//functionality
 	float								m_movespeed;
+
+	RECT		m_ScreenDimensions;
+
 
 	//camera
 	DirectX::SimpleMath::Vector3		m_camPosition;

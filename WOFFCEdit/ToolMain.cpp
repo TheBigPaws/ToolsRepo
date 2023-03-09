@@ -20,9 +20,15 @@ ToolMain::ToolMain()
 	m_toolInputCommands.right		= false;
 	
 	m_toolInputCommands.rotate[0] = 0;
-	m_toolInputCommands.rotate[0] = 1;
+	m_toolInputCommands.rotate[0] = 0;
+
+	m_toolInputCommands.MouseXY[0] = 0;
+	m_toolInputCommands.MouseXY[1] = 0;
 
 	m_toolInputCommands.RMBdown = false;
+	m_toolInputCommands.LMBdown = false;
+
+	//m_toolInputCommands.LMBclicked = false;
 
 	int tlX = 0;
 	int tlY = 0;
@@ -296,10 +302,22 @@ void ToolMain::Tick(MSG* msg)
 
 	//Renderer Update Call
 	m_d3dRenderer.Tick(&m_toolInputCommands);
+
+
+	if (m_toolInputCommands.LMBdown)
+	{
+		m_selectedObject = m_d3dRenderer.MousePicking();
+		m_toolInputCommands.LMBdown = false;
+	}
+
 }
 
 void ToolMain::UpdateInput(MSG* msg)
 {
+
+
+	//m_toolInputCommands.LMBclicked = false;
+
 
 	switch (msg->message)
 	{
@@ -318,17 +336,25 @@ void ToolMain::UpdateInput(MSG* msg)
 		//m_toolInputCommands.rotate[1] = m_d3dRenderer.m_mouse->GetState().x;
 		//SetCursorPos()
 
+		POINT pt_;
 
-		if (m_toolInputCommands.RMBdown == true) {
-			POINT pt_;
-			if (GetCursorPos(&pt_)) {
+		if (GetCursorPos(&pt_)) {
+
+
+			m_toolInputCommands.MouseXY[0] = GET_X_LPARAM(msg->lParam);
+			m_toolInputCommands.MouseXY[1] = GET_Y_LPARAM(msg->lParam);
+
+
+			if (m_toolInputCommands.RMBdown == true) {
 				m_toolInputCommands.rotate[0] = pt_.x - PressedPos[0];
 				m_toolInputCommands.rotate[1] = pt_.y - PressedPos[1];
 
-
 				SetCursorPos(PressedPos[0], PressedPos[1]);
 			}
+
+			
 		}
+
 		
 
 		break;
@@ -336,13 +362,11 @@ void ToolMain::UpdateInput(MSG* msg)
 	case WM_RBUTTONDOWN:	//mouse button down,  you will probably need to check when its up too
 		//set some flag for the mouse button in inputcommands
 
-		if (!m_toolInputCommands.RMBdown) {
-			POINT pt;
-			if (GetCursorPos(&pt)) {
-				PressedPos[0] = pt.x;
-				PressedPos[1] = pt.y;
+		POINT pt;
+		if (GetCursorPos(&pt)) {
+			PressedPos[0] = pt.x;
+			PressedPos[1] = pt.y;
 
-			}
 		}
 	
 
@@ -359,7 +383,29 @@ void ToolMain::UpdateInput(MSG* msg)
 		ShowCursor(true);
 		break;
 
+	case WM_LBUTTONDOWN:	//mouse button down,  you will probably need to check when its up too
+		//set some flag for the mouse button in inputcommands
+
+
+		//m_toolInputCommands.LMBclicked = true;
+		m_toolInputCommands.LMBdown = true;
+
+		//ShowCursor(false);
+
+
+		//GetCursorPos
+		break;
+	case WM_LBUTTONUP:	//mouse button down,  you will probably need to check when its up too
+		//set some flag for the mouse button in inputcommands
+		m_toolInputCommands.LMBdown = false;
+		//ShowCursor(true);
+		break; 
 	}
+
+	
+
+
+
 	//here we update all the actual app functionality that we want.  This information will either be used int toolmain, or sent down to the renderer (Camera movement etc
 	//WASD movement
 	if (m_keyArray['W'])

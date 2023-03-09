@@ -32,7 +32,6 @@ public:	//variables
 	int m_selectedObject;						//ID of current Selection
 
 
-
 private:	//methods
 	void	onContentAdded();
 
