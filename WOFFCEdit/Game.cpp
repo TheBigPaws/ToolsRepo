@@ -253,12 +253,12 @@ void Game::Render()
     m_deviceResources->PIXBeginEvent(L"Render");
     auto context = m_deviceResources->GetD3DDeviceContext();
 
-	if (m_grid)
+	if (m_grid || true)
 	{
 		// Draw procedurally generated dynamic grid
 		const XMVECTORF32 xaxis = { 512.f, 0.f, 0.f };
 		const XMVECTORF32 yaxis = { 0.f, 0.f, 512.f };
-		DrawGrid(xaxis, yaxis, g_XMZero, 512, 512, Colors::Gray);
+		DrawGrid(g_XMZero, 10.0f, 500.0f);
 	}
 	//CAMERA POSITION ON HUD
 	m_sprites->Begin();
@@ -292,7 +292,7 @@ void Game::Render()
 	context->OMSetBlendState(m_states->Opaque(), nullptr, 0xFFFFFFFF);
 	context->OMSetDepthStencilState(m_states->DepthDefault(),0);
 	context->RSSetState(m_states->CullNone());
-//	context->RSSetState(m_states->Wireframe());		//uncomment for wireframe
+	//context->RSSetState(m_states->Wireframe());		//uncomment for wireframe
 
 	//Render the batch,  This is handled in the Display chunk becuase it has the potential to get complex
 	m_displayChunk.RenderBatch(m_deviceResources);
@@ -321,14 +321,24 @@ void Game::Clear()
     m_deviceResources->PIXEndEvent();
 }
 
-void XM_CALLCONV Game::DrawGrid(FXMVECTOR xAxis, FXMVECTOR yAxis, FXMVECTOR origin, size_t xdivs, size_t ydivs, GXMVECTOR color)
+void XM_CALLCONV Game::DrawGrid(DirectX::FXMVECTOR origin, float cellSize, float gridExtent)
 {
-    m_deviceResources->PIXBeginEvent(L"Draw grid");
+    
+	//if (gridExtent < cellSize) {
+	//	return;
+	//}
+	
+	DirectX::GXMVECTOR MainColor =  Colors::White;
+	DirectX::GXMVECTOR SecondaryColor =  Colors::Gray;
+
+
+	m_deviceResources->PIXBeginEvent(L"Draw grid");
 
     auto context = m_deviceResources->GetD3DDeviceContext();
     context->OMSetBlendState(m_states->Opaque(), nullptr, 0xFFFFFFFF);
-    context->OMSetDepthStencilState(m_states->DepthNone(), 0);
+    context->OMSetDepthStencilState(m_states->DepthDefault(), 0);
     context->RSSetState(m_states->CullCounterClockwise());
+	//context->colo
 
     m_batchEffect->Apply(context);
 
@@ -336,32 +346,93 @@ void XM_CALLCONV Game::DrawGrid(FXMVECTOR xAxis, FXMVECTOR yAxis, FXMVECTOR orig
 
     m_batch->Begin();
 
-    xdivs = std::max<size_t>(1, xdivs);
-    ydivs = std::max<size_t>(1, ydivs);
 
-    for (size_t i = 0; i <= xdivs; ++i)
-    {
-        float fPercent = float(i) / float(xdivs);
-        fPercent = (fPercent * 2.0f) - 1.0f;
-        XMVECTOR vScale = XMVectorScale(xAxis, fPercent);
-        vScale = XMVectorAdd(vScale, origin);
+	// e: 12  6
+	// s:  5  2
+	//
+	// -6 -4 -2 0 2  6 
 
-        VertexPositionColor v1(XMVectorSubtract(vScale, yAxis), color);
-        VertexPositionColor v2(XMVectorAdd(vScale, yAxis), color);
-        m_batch->DrawLine(v1, v2);
-    }
+	for (float i = int(gridExtent / cellSize) * -cellSize; i < gridExtent; i+= cellSize)
+	{
 
-    for (size_t i = 0; i <= ydivs; i++)
-    {
-        float fPercent = float(i) / float(ydivs);
-        fPercent = (fPercent * 2.0f) - 1.0f;
-        XMVECTOR vScale = XMVectorScale(yAxis, fPercent);
-        vScale = XMVectorAdd(vScale, origin);
+		XMVECTORF32 v1_pos1 = {i, 0, -gridExtent };
+		XMVECTORF32 v1_pos2 = {i, 0, gridExtent };
 
-        VertexPositionColor v1(XMVectorSubtract(vScale, xAxis), color);
-        VertexPositionColor v2(XMVectorAdd(vScale, xAxis), color);
-        m_batch->DrawLine(v1, v2);
-    }
+		VertexPositionColor v1(XMVectorAdd(v1_pos1, origin), MainColor);
+		VertexPositionColor v2(XMVectorAdd(v1_pos2, origin), MainColor);
+
+		m_batch->DrawLine(v1, v2);
+
+
+		XMVECTORF32 v1_pos1_ = { -gridExtent, 0, i };
+		XMVECTORF32 v1_pos2_ = {  gridExtent, 0, i  };
+
+		VertexPositionColor v1_(XMVectorAdd(v1_pos1_, origin), MainColor);
+		VertexPositionColor v2_(XMVectorAdd(v1_pos2_, origin), MainColor);
+
+		m_batch->DrawLine(v1_, v2_);
+
+
+
+		for (int j = 1; j < 10; j ++)
+		{
+
+			XMVECTORF32 greyPosX1 = { i + j*(cellSize/10.0f), 0.0f, -gridExtent };
+			XMVECTORF32 greyPosX2 = { i + j*(cellSize/10.0f), 0.0f, gridExtent };
+
+			VertexPositionColor greyv1(XMVectorAdd(greyPosX1, origin), SecondaryColor);
+			VertexPositionColor greyv2(XMVectorAdd(greyPosX2, origin), SecondaryColor);
+
+			m_batch->DrawLine(greyv1, greyv2);
+
+
+			XMVECTORF32 greyPosZ1 = {-gridExtent, 0.0f, i + j * (cellSize / 10.0f) };
+			XMVECTORF32 greyPosZ2 = {gridExtent, 0.0f, i + j * (cellSize / 10.0f)};
+
+			VertexPositionColor greyv1_(XMVectorAdd(greyPosZ1, origin), SecondaryColor);
+			VertexPositionColor greyv2_(XMVectorAdd(greyPosZ2, origin), SecondaryColor);
+
+			m_batch->DrawLine(greyv1_, greyv2_);
+
+		}
+
+	}
+
+
+    //for (size_t i = 0; i <= xdivs; ++i)
+    //{
+    //    float fPercent = float(i) / float(xdivs);
+    //    fPercent = (fPercent * 2.0f) - 1.0f;
+    //    XMVECTOR vScale = XMVectorScale(xAxis, fPercent);
+    //    vScale = XMVectorAdd(vScale, origin);
+	//
+    //    VertexPositionColor v1(XMVectorSubtract(vScale, yAxis), color);
+    //    VertexPositionColor v2(XMVectorAdd(vScale, yAxis), color);
+    //    m_batch->DrawLine(v1, v2);
+    //}
+	//
+    //for (size_t i = 0; i <= ydivs; i++)
+    //{
+    //    float fPercent = float(i) / float(ydivs);
+    //    fPercent = (fPercent * 2.0f) - 1.0f;
+    //    XMVECTOR vScale = XMVectorScale(yAxis, fPercent);
+    //    vScale = XMVectorAdd(vScale, origin);
+	//
+    //    VertexPositionColor v1(XMVectorSubtract(vScale, xAxis), color);
+    //    VertexPositionColor v2(XMVectorAdd(vScale, xAxis), color);
+    //    m_batch->DrawLine(v1, v2);
+    //}
+	//
+	//for (int i = 0; i <= 50; i++)
+	//{
+	//
+	//	XMVECTORF32 v1_pos = { i, 10.f, 0.f };
+	//	XMVECTORF32 v2_pos = { i, 0.f, 0.f };
+	//	
+	//	VertexPositionColor v1(v1_pos, color);
+	//	VertexPositionColor v2(v2_pos, color);
+	//	m_batch->DrawLine(v1, v2);
+	//}
 
     m_batch->End();
 
