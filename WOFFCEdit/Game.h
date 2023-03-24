@@ -54,6 +54,8 @@ public:
 
 	int MousePicking();
 
+	int selectedIDobject = 0;
+
 #ifdef DXTK_AUDIO
 	void NewAudioDevice();
 #endif

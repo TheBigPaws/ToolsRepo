@@ -74,11 +74,25 @@ void DisplayChunk::InitialiseBatch()
 			m_terrainGeometry[i][j].position =			Vector3(j*m_terrainPositionScalingFactor-(0.5*m_terrainSize), (float)(m_heightMap[index])*m_terrainHeightScale, i*m_terrainPositionScalingFactor-(0.5*m_terrainSize));	//This will create a terrain going from -64->64.  rather than 0->128.  So the center of the terrain is on the origin
 			m_terrainGeometry[i][j].normal =			Vector3(0.0f, 1.0f, 0.0f);						//standard y =up
 			m_terrainGeometry[i][j].textureCoordinate =	Vector2(((float)m_textureCoordStep*j)*m_tex_diffuse_tiling, ((float)m_textureCoordStep*i)*m_tex_diffuse_tiling);				//Spread tex coords so that its distributed evenly across the terrain from 0-1
+  
 			
 		}
 	}
 	CalculateTerrainNormals();
 	
+}
+
+void DisplayChunk::MovingFunction(float dt) {
+	int index = 0;
+
+	for (size_t i = 0; i < TERRAINRESOLUTION; i++)
+	{
+		for (size_t j = 0; j < TERRAINRESOLUTION; j++)
+		{
+			index = (TERRAINRESOLUTION * i) + j;
+			//m_terrainGeometry[i][j].position.y += dt * 10.0f;
+		}
+	}
 }
 
 void DisplayChunk::LoadHeightMap(std::shared_ptr<DX::DeviceResources>  DevResources)

@@ -198,6 +198,12 @@ void Game::Update(DX::StepTimer const& timer)
     
     //SetCursorPos
 
+
+
+
+
+	m_displayChunk.MovingFunction(timer.GetElapsedSeconds());
+
 	//update lookat point
 	m_camLookAt = m_camPosition + m_camLookDirection;
 
@@ -281,6 +287,27 @@ void Game::Render()
 															m_displayList[i].m_orientation.z *3.1415 / 180);
 
 		XMMATRIX local = m_world * XMMatrixTransformation(g_XMZero, Quaternion::Identity, scale, g_XMZero, rotate, translate);
+
+
+		//SELECTED OBJECT CODE
+		m_displayList[i].m_model->UpdateEffects([&](IEffect* effect)
+		{
+				auto fog = dynamic_cast<IEffectFog*>(effect);
+				if (fog)
+				{
+
+					if (selectedIDobject == i) {
+						fog->SetFogEnabled(true);
+					}
+					else {
+						fog->SetFogEnabled(false);
+										}
+					fog->SetFogStart(0.0f); // assuming RH coordiantes
+					fog->SetFogEnd(0.0f);
+					fog->SetFogColor(Colors::Yellow);
+				}
+		});
+		
 
 		m_displayList[i].m_model->Draw(context, *m_states, local, m_view, m_projection, false);	//last variable in draw,  make TRUE for wireframe
 
@@ -751,6 +778,8 @@ int Game::MousePicking() {
 			}
 		}
 	}
+
+	selectedIDobject = selectedID;
 
 	//if we got a hit.  return it.  
 	return selectedID;
