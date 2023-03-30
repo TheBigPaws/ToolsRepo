@@ -10,6 +10,7 @@
 #include "DisplayObject.h"
 #include "DisplayChunk.h"
 #include "ChunkObject.h"
+#include "CameraMain.h"
 #include "InputCommands.h"
 #include <vector>
 
@@ -51,8 +52,10 @@ public:
 	void SaveDisplayChunk(ChunkObject *SceneChunk);	//saves geometry et al
 	void ClearDisplayList();
 
+	void handleInput(float dt);
 
 	int MousePicking();
+	DirectX::SimpleMath::Vector3 getClickingVector();
 
 	int selectedIDobject = 0;
 
@@ -81,12 +84,7 @@ private:
 
 
 	//camera
-	DirectX::SimpleMath::Vector3		m_camPosition;
-	DirectX::SimpleMath::Vector3		m_camOrientation;
-	DirectX::SimpleMath::Vector3		m_camLookAt;
-	DirectX::SimpleMath::Vector3		m_camLookDirection;
-	DirectX::SimpleMath::Vector3		m_camRight;
-	float m_camRotRate;
+	CameraMain Camera_;
 
 	//control variables
 	bool m_grid;							//grid rendering on / off

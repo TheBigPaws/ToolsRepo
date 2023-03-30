@@ -28,6 +28,10 @@ ToolMain::ToolMain()
 	m_toolInputCommands.RMBdown = false;
 	m_toolInputCommands.LMBdown = false;
 
+	m_toolInputCommands.lowerGround = false;
+	m_toolInputCommands.raiseGround = false;
+	m_toolInputCommands.levelGround = false;
+
 	//m_toolInputCommands.LMBclicked = false;
 
 	int tlX = 0;
@@ -332,9 +336,7 @@ void ToolMain::UpdateInput(MSG* msg)
 
 	case WM_MOUSEMOVE:
 
-		//m_toolInputCommands.rotate[0] = m_d3dRenderer.m_mouse->GetState().x;
-		//m_toolInputCommands.rotate[1] = m_d3dRenderer.m_mouse->GetState().x;
-		//SetCursorPos()
+
 
 		POINT pt_;
 
@@ -430,8 +432,23 @@ void ToolMain::UpdateInput(MSG* msg)
 		m_toolInputCommands.right = true;
 	}
 	else m_toolInputCommands.right = false;
-	//rotation
+
+	if (m_keyArray['I'])
+	{
+		m_toolInputCommands.raiseGround = true;
+	}
+	else m_toolInputCommands.raiseGround = false;
+
+	if (m_keyArray['O'])
+	{
+		m_toolInputCommands.lowerGround = true;
+	}
+	else m_toolInputCommands.lowerGround = false;
 
 
-	//WASD
+	if (m_keyArray['P'])
+	{
+		m_toolInputCommands.levelGround = true;
+	}
+	else m_toolInputCommands.levelGround = false;
 }

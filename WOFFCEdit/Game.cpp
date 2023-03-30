@@ -25,30 +25,8 @@ Game::Game()
 	m_grid = false;
 
 	//functional
-	m_movespeed = 0.30;
-	m_camRotRate = 0.3f;
+	m_movespeed = 5.0f;
 
-	//camera
-	m_camPosition.x = 0.0f;
-	m_camPosition.y = 3.7f;
-	m_camPosition.z = -3.5f;
-
-
-	m_camLookAt.x = 0.0f;
-	m_camLookAt.y = 0.0f;
-	m_camLookAt.z = 0.0f;
-
-	m_camLookDirection.x = 0.0f;
-	m_camLookDirection.y = 0.0f;
-	m_camLookDirection.z = 0.0f;
-
-	m_camRight.x = 0.0f;
-	m_camRight.y = 0.0f;
-	m_camRight.z = 0.0f;
-
-	m_camOrientation.x = 0.0f;
-	m_camOrientation.y = 0.0f;
-	m_camOrientation.z = 0.0f;
 
 }
 
@@ -138,77 +116,71 @@ void Game::Tick(InputCommands *Input)
     Render();
 }
 
+void Game::handleInput(float dt) {
+
+	//process input and update stuff
+	float dForward = 0.0f;
+	float dRight = 0.0f;
+	if (m_InputCommands.forward)
+	{
+		dForward += m_movespeed * dt;
+	}
+	if (m_InputCommands.back)
+	{
+		dForward -= m_movespeed * dt;
+	}
+	if (m_InputCommands.right)
+	{
+		dRight +=  m_movespeed * dt;
+	}
+	if (m_InputCommands.left)
+	{
+		dRight -=  m_movespeed * dt;
+	}
+	if (m_InputCommands.raiseGround)
+	{
+		//chunk
+		m_displayChunk.raiseGround(dt);
+	}
+	if (m_InputCommands.lowerGround)
+	{
+		m_displayChunk.lowerGround(dt);
+	}
+	if (m_InputCommands.levelGround)
+	{
+		m_displayChunk.levelGround(dt);
+	}
+
+
+	Camera_.UpdateCameraPosition(dForward, dRight);
+
+
+}
+
 // Updates the world.
 void Game::Update(DX::StepTimer const& timer)
 {
 	//TODO  any more complex than this, and the camera should be abstracted out to somewhere else
 	//camera motion is on a plane, so kill the 7 component of the look direction
-	Vector3 planarMotionVector = m_camLookDirection;
-	planarMotionVector.y = 0.0;
+
 
     if (m_InputCommands.RMBdown)
     {
-        //m_camPosition -= m_camRight * m_movespeed;
-        m_camOrientation.y += timer.GetElapsedSeconds() * m_camRotRate * m_InputCommands.rotate[0];
-        m_camOrientation.z -= timer.GetElapsedSeconds() * m_camRotRate * m_InputCommands.rotate[1];
 
-        if (m_camOrientation.z > 90 * 3.14f/ 180) {
-            m_camOrientation.z = 90 * 3.14f/ 180;
-        }
-        if (m_camOrientation.z < -90 * 3.14f/ 180) {
-            m_camOrientation.z = -90 * 3.14f / 180;
-        }
-
-
+		Camera_.UpdateCameraRotation(m_InputCommands.rotate[0], m_InputCommands.rotate[1], timer.GetElapsedSeconds());
 
     }
 
-    //x = cos(yaw) * cos(pitch)
-    //y = sin(yaw) * cos(pitch)
-    //z = sin(pitch
+	m_displayChunk.selectVertex(Camera_.m_camPosition, getClickingVector());
 
 
-    m_camLookDirection.x = cos(m_camOrientation.y) * cos(m_camOrientation.z);
-    m_camLookDirection.y = sin(m_camOrientation.z);
-    m_camLookDirection.z = sin(m_camOrientation.y) * cos(m_camOrientation.z);
+	handleInput(timer.GetElapsedSeconds());
 
+	
 
-	m_camLookDirection.Normalize();
-
-	//create right vector from look Direction
-	m_camLookDirection.Cross(Vector3::UnitY, m_camRight);
-
-	//process input and update stuff
-	if (m_InputCommands.forward)
-	{	
-		m_camPosition += m_camLookDirection*m_movespeed;
-	}
-	if (m_InputCommands.back)
-	{
-		m_camPosition -= m_camLookDirection*m_movespeed;
-	}
-	if (m_InputCommands.right)
-	{
-		m_camPosition += m_camRight*m_movespeed;
-	}
-	if (m_InputCommands.left)
-	{
-		m_camPosition -= m_camRight*m_movespeed;
-	}
-    
-    //SetCursorPos
-
-
-
-
-
-	m_displayChunk.MovingFunction(timer.GetElapsedSeconds());
-
-	//update lookat point
-	m_camLookAt = m_camPosition + m_camLookDirection;
 
 	//apply camera vectors
-    m_view = Matrix::CreateLookAt(m_camPosition, m_camLookAt, Vector3::UnitY);
+    m_view = Matrix::CreateLookAt(Camera_.m_camPosition, Camera_.m_camLookAt, Vector3::UnitY);
 
     m_batchEffect->SetView(m_view);
     m_batchEffect->SetWorld(Matrix::Identity);
@@ -259,7 +231,7 @@ void Game::Render()
     m_deviceResources->PIXBeginEvent(L"Render");
     auto context = m_deviceResources->GetD3DDeviceContext();
 
-	if (m_grid || true)
+	if (m_grid)
 	{
 		// Draw procedurally generated dynamic grid
 		const XMVECTORF32 xaxis = { 512.f, 0.f, 0.f };
@@ -269,7 +241,7 @@ void Game::Render()
 	//CAMERA POSITION ON HUD
 	m_sprites->Begin();
 	WCHAR   Buffer[256];
-	std::wstring var = L"Cam X: " + std::to_wstring(m_camPosition.x) + L"Cam Z: " + std::to_wstring(m_camPosition.z);
+	std::wstring var = L"Cam X: " + std::to_wstring(Camera_.m_camPosition.x) + L"Cam Z: " + std::to_wstring(Camera_.m_camPosition.z);
 	m_font->DrawString(m_sprites.get(), var.c_str() , XMFLOAT2(100, 10), Colors::Yellow);
 	m_sprites->End();
 
@@ -319,7 +291,7 @@ void Game::Render()
 	context->OMSetBlendState(m_states->Opaque(), nullptr, 0xFFFFFFFF);
 	context->OMSetDepthStencilState(m_states->DepthDefault(),0);
 	context->RSSetState(m_states->CullNone());
-	//context->RSSetState(m_states->Wireframe());		//uncomment for wireframe
+	context->RSSetState(m_states->Wireframe());		//uncomment for wireframe
 
 	//Render the batch,  This is handled in the Display chunk becuase it has the potential to get complex
 	m_displayChunk.RenderBatch(m_deviceResources);
@@ -726,6 +698,31 @@ std::wstring StringToWCHART(std::string s)
 	std::wstring r(buf);
 	delete[] buf;
 	return r;
+}
+
+DirectX::SimpleMath::Vector3 Game::getClickingVector() {
+
+	DirectX::SimpleMath::Vector3 ret_;
+
+	const XMVECTOR nearSource = XMVectorSet(m_InputCommands.MouseXY[0], m_InputCommands.MouseXY[1], 0.0f, 1.0f);
+	const XMVECTOR farSource = XMVectorSet(m_InputCommands.MouseXY[0], m_InputCommands.MouseXY[1], 1.0f, 1.0f);
+
+
+	//Unproject the points on the near and far plane, with respect to the matrix we just created.
+	XMVECTOR nearPoint = XMVector3Unproject(nearSource, 0.0f, 0.0f, m_ScreenDimensions.right, m_ScreenDimensions.bottom, m_deviceResources->GetScreenViewport().MinDepth, m_deviceResources->GetScreenViewport().MaxDepth, m_projection, m_view, m_world);
+	XMVECTOR farPoint = XMVector3Unproject(farSource, 0.0f, 0.0f, m_ScreenDimensions.right, m_ScreenDimensions.bottom, m_deviceResources->GetScreenViewport().MinDepth, m_deviceResources->GetScreenViewport().MaxDepth, m_projection, m_view, m_world);
+
+	//turn the transformed points into our picking vector. 
+	XMVECTOR pickingVector = farPoint - nearPoint;
+	pickingVector = XMVector3Normalize(pickingVector);
+	
+	ret_.x = XMVectorGetX(pickingVector);
+	ret_.y = XMVectorGetY(pickingVector);
+	ret_.z = XMVectorGetZ(pickingVector);
+	
+	
+	return ret_;
+
 }
 
 int Game::MousePicking() {

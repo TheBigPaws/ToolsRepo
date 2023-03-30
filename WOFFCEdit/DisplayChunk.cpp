@@ -13,6 +13,8 @@ DisplayChunk::DisplayChunk()
 	m_terrainHeightScale = 0.25;  //convert our 0-256 terrain to 64
 	m_textureCoordStep = 1.0 / (TERRAINRESOLUTION-1);	//-1 becuase its split into chunks. not vertices.  we want tthe last one in each row to have tex coord 1
 	m_terrainPositionScalingFactor = m_terrainSize / (TERRAINRESOLUTION-1);
+
+	
 }
 
 
@@ -44,6 +46,10 @@ void DisplayChunk::PopulateChunkData(ChunkObject * SceneChunk)
 
 void DisplayChunk::RenderBatch(std::shared_ptr<DX::DeviceResources>  DevResources)
 {
+	
+	
+	//m_terrainGeometry[selectedVertex[0]][selectedVertex[1]].position.y = baseY + sin(timInc*2) * 5.0f;
+
 	auto context = DevResources->GetD3DDeviceContext();
 
 	m_terrainEffect->Apply(context);
@@ -79,21 +85,146 @@ void DisplayChunk::InitialiseBatch()
 		}
 	}
 	CalculateTerrainNormals();
+
+	selectedVertex[0] = TERRAINRESOLUTION/2;
+	selectedVertex[1] = TERRAINRESOLUTION/2;
+
+	//baseY = m_terrainGeometry[selectedVertex[0]][selectedVertex[1]].position.y;
 	
 }
 
-void DisplayChunk::MovingFunction(float dt) {
-	int index = 0;
+
+void DisplayChunk::selectVertex(DirectX::SimpleMath::Vector3 camPos, DirectX::SimpleMath::Vector3 camLookDir){
+
 
 	for (size_t i = 0; i < TERRAINRESOLUTION; i++)
 	{
 		for (size_t j = 0; j < TERRAINRESOLUTION; j++)
 		{
-			index = (TERRAINRESOLUTION * i) + j;
-			//m_terrainGeometry[i][j].position.y += dt * 10.0f;
+			//distance from point
+			float thisVDist = (m_terrainGeometry[i][j].position - camPos).Cross(camLookDir).Length() / camLookDir.Length();
+			float oldSelected = (m_terrainGeometry[selectedVertex[0]][selectedVertex[1]].position - camPos).Cross(camLookDir).Length() / camLookDir.Length();
+	
+			if (thisVDist < oldSelected) {
+				//m_terrainGeometry[selectedVertex[0]][selectedVertex[1]].position.y = baseY;
+	
+				selectedVertex[0] = i;
+				selectedVertex[1] = j;
+				//baseY = m_terrainGeometry[selectedVertex[0]][selectedVertex[1]].position.y;
+	
+				if (thisVDist < 5) {
+					closeEnough = true;
+				}
+				else {
+					closeEnough = false;
+				}
+	
+			}
+			
+		}
+	}
+
+
+	//implement intersection
+	//for (size_t i = 0; i < TERRAINRESOLUTION-1; i++)
+	//{
+	//	for (size_t j = 0; j < TERRAINRESOLUTION-1; j++)
+	//	{
+	//		DirectX::SimpleMath::Vector3 p1 = m_terrainGeometry[i][j].position;
+	//		DirectX::SimpleMath::Vector3 p1_ = m_terrainGeometry[i+1][j+1].position;
+	//		DirectX::SimpleMath::Vector3 p2 = m_terrainGeometry[i+1][j].position;;
+	//		DirectX::SimpleMath::Vector3 p3 = m_terrainGeometry[i][j+1].position;
+	//
+	//
+	//		DirectX::SimpleMath::Vector3 q1 = camPos;
+	//		DirectX::SimpleMath::Vector3 q2 = camPos + camLookDir * 100000;
+	//	}
+	//}
+
+}
+
+void DisplayChunk::raiseGround(float dt) {
+	if (!closeEnough) {
+		return;
+	}
+
+	for (size_t i = 0; i < TERRAINRESOLUTION; i++)
+	{
+		for (size_t j = 0; j < TERRAINRESOLUTION; j++)
+		{
+
+			float Pdist = (m_terrainGeometry[selectedVertex[0]][selectedVertex[1]].position - m_terrainGeometry[i][j].position).Length();
+			float interactRadius = 10.0f;
+			float raiseSpeed = 3.0f;
+
+			if (Pdist< interactRadius) {
+				m_terrainGeometry[i][j].position.y += (1.0f - Pdist/interactRadius) * dt* raiseSpeed;
+			}
+
 		}
 	}
 }
+
+void DisplayChunk::lowerGround(float dt) {
+
+	if (!closeEnough) {
+		return;
+	}
+
+	for (size_t i = 0; i < TERRAINRESOLUTION; i++)
+	{
+		for (size_t j = 0; j < TERRAINRESOLUTION; j++)
+		{
+
+			float Pdist = (m_terrainGeometry[selectedVertex[0]][selectedVertex[1]].position - m_terrainGeometry[i][j].position).Length();
+			float interactRadius = 10.0f;
+			float raiseSpeed = 3.0f;
+
+			if (Pdist < interactRadius) {
+				m_terrainGeometry[i][j].position.y -= (1.0f - Pdist / interactRadius) * dt * raiseSpeed;
+			}
+
+		}
+	}
+}
+
+void DisplayChunk::levelGround(float dt) {
+	if (!closeEnough) {
+		return;
+	}
+
+	for (size_t i = 0; i < TERRAINRESOLUTION; i++)
+	{
+		for (size_t j = 0; j < TERRAINRESOLUTION; j++)
+		{
+
+			DirectX::SimpleMath::Vector3 distanceVector = m_terrainGeometry[selectedVertex[0]][selectedVertex[1]].position - m_terrainGeometry[i][j].position;
+			distanceVector.y = 0;
+
+			float Pdist = distanceVector.Length();
+			float interactRadius = 10.0f;
+			float raiseSpeed = 3.0f;
+
+			if (Pdist < interactRadius) {
+
+				float Ydir = m_terrainGeometry[selectedVertex[0]][selectedVertex[1]].position.y - m_terrainGeometry[i][j].position.y;
+
+				if (abs(Ydir) > 0) {
+					m_terrainGeometry[i][j].position.y += dt * raiseSpeed * (Ydir / abs(Ydir));
+
+					if (abs(m_terrainGeometry[selectedVertex[0]][selectedVertex[1]].position.y - m_terrainGeometry[i][j].position.y) < 2.0f) {
+						m_terrainGeometry[i][j].position.y = m_terrainGeometry[selectedVertex[0]][selectedVertex[1]].position.y;
+					}
+
+				}
+
+				//m_terrainGeometry[i][j].position.y -= (1.0f - Pdist / interactRadius) * dt * raiseSpeed;
+			}
+
+		}
+	}
+}
+
 
 void DisplayChunk::LoadHeightMap(std::shared_ptr<DX::DeviceResources>  DevResources)
 {

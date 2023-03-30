@@ -24,8 +24,17 @@ public:
 	ID3D11ShaderResourceView *					m_texture_diffuse;				//diffuse texture
 	Microsoft::WRL::ComPtr<ID3D11InputLayout>   m_terrainInputLayout;
 
-	void MovingFunction(float dt);
+	void raiseGround(float dt);
+	void lowerGround(float dt);
+	void levelGround(float dt);
 
+
+	void selectVertex(DirectX::SimpleMath::Vector3 camPos, DirectX::SimpleMath::Vector3 camLookDir);
+
+	float timInc = 0.0f;
+	int selectedVertex[2];
+	//float baseY;
+	bool closeEnough = false;
 private:
 	
 	DirectX::VertexPositionNormalTexture m_terrainGeometry[TERRAINRESOLUTION][TERRAINRESOLUTION];

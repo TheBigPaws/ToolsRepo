@@ -7,6 +7,9 @@ struct InputCommands
 	bool right;
 	bool left;
 
+	bool raiseGround;
+	bool lowerGround;
+	bool levelGround;
 
 	int rotate[2];
 	
