@@ -1,4 +1,6 @@
 #include "MFCMain.h"
+#include "wtypes.h"
+
 #include "resource.h"
 
 
@@ -6,7 +8,13 @@ BEGIN_MESSAGE_MAP(MFCMain, CWinApp)
 	ON_COMMAND(ID_FILE_QUIT,	&MFCMain::MenuFileQuit)
 	ON_COMMAND(ID_FILE_SAVETERRAIN, &MFCMain::MenuFileSaveTerrain)
 	ON_COMMAND(ID_EDIT_SELECT, &MFCMain::MenuEditSelect)
-	ON_COMMAND(ID_BUTTON40001,	&MFCMain::ToolBarButton1)
+	ON_COMMAND(ID_BUTTON40001,	&MFCMain::ToolBarButtonSave)
+	ON_COMMAND(ID_BUTTON40012,	&MFCMain::ToolBarButtonRaise)
+	ON_COMMAND(ID_BUTTON40010,	&MFCMain::ToolBarButtonLower)
+	ON_COMMAND(ID_BUTTON40015,	&MFCMain::ToolBarButtonFlatten)
+	ON_COMMAND(ID_BUTTON40019,	&MFCMain::ToolBarButtonCursor)
+	ON_COMMAND(ID_BUTTON40020,	&MFCMain::ToolBarButtonGrid)
+	ON_COMMAND(ID_BUTTON40023,	&MFCMain::ToolBarButtonWireframe)
 	ON_UPDATE_COMMAND_UI(ID_INDICATOR_TOOL, &CMyFrame::OnUpdatePage)
 END_MESSAGE_MAP()
 
@@ -16,10 +24,21 @@ BOOL MFCMain::InitInstance()
 	m_frame = new CMyFrame();
 	m_pMainWnd = m_frame;
 
+
+	RECT desktop;
+	// Get a handle to the desktop window
+	const HWND hDesktop = GetDesktopWindow();
+	// Get the size of screen to the variable desktop
+	GetWindowRect(hDesktop, &desktop);
+	// The top left corner will have coordinates (0,0)
+	// and the bottom right corner will have coordinates
+	// (horizontal, vertical)
+
+
 	m_frame->Create(	NULL,
 					_T("World Of Flim-Flam Craft Editor"),
 					WS_OVERLAPPEDWINDOW,
-					CRect(100, 100, 1024, 768),
+					CRect(0, 0, desktop.right, desktop.bottom-50),
 					NULL,
 					NULL,
 					0,
@@ -105,7 +124,7 @@ void MFCMain::MenuEditSelect()
 	m_ToolSelectDialogue.SetObjectData(&m_ToolSystem.m_sceneGraph, &m_ToolSystem.m_selectedObject);
 }
 
-void MFCMain::ToolBarButton1()
+void MFCMain::ToolBarButtonSave()
 {
 	
 	m_ToolSystem.onActionSave();
@@ -119,4 +138,42 @@ MFCMain::MFCMain()
 
 MFCMain::~MFCMain()
 {
+}
+
+void MFCMain::ToolBarButtonRaise() {
+
+	m_ToolSystem.getGame()->setTerrainEditType(RAISE);
+
+
+}
+void MFCMain::ToolBarButtonLower() {
+
+	m_ToolSystem.getGame()->setTerrainEditType(LOWER);
+
+
+
+}
+void MFCMain::ToolBarButtonFlatten() {
+
+	m_ToolSystem.getGame()->setTerrainEditType(FLATTEN);
+
+
+
+}
+
+void MFCMain::ToolBarButtonCursor() {
+	m_ToolSystem.getGame()->setTerrainEditType(NOTHING);
+
+}
+
+void MFCMain::ToolBarButtonGrid() {
+
+	m_ToolSystem.getGame()->ChangeGridState();
+
+}
+
+void MFCMain::ToolBarButtonWireframe() {
+
+	m_ToolSystem.getGame()->renderInWireframe = !m_ToolSystem.getGame()->renderInWireframe;
+
 }

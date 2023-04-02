@@ -1,6 +1,7 @@
 #include "ToolMain.h"
 #include "resource.h"
 #include <vector>
+#include <iostream>
 #include <sstream>
 
 //
@@ -28,9 +29,6 @@ ToolMain::ToolMain()
 	m_toolInputCommands.RMBdown = false;
 	m_toolInputCommands.LMBdown = false;
 
-	m_toolInputCommands.lowerGround = false;
-	m_toolInputCommands.raiseGround = false;
-	m_toolInputCommands.levelGround = false;
 
 	//m_toolInputCommands.LMBclicked = false;
 
@@ -58,6 +56,7 @@ void ToolMain::onActionInitialise(HWND handle, int width, int height)
 	m_height	= height;
 	
 	m_d3dRenderer.Initialize(handle, m_width, m_height);
+
 
 	//database connection establish
 	int rc;
@@ -178,7 +177,9 @@ void ToolMain::onActionLoad()
 	m_chunk.chunk_y_size_metres = sqlite3_column_int(pResultsChunk, 3);
 	m_chunk.chunk_base_resolution = sqlite3_column_int(pResultsChunk, 4);
 	m_chunk.heightmap_path = reinterpret_cast<const char*>(sqlite3_column_text(pResultsChunk, 5));
-	m_chunk.tex_diffuse_path = reinterpret_cast<const char*>(sqlite3_column_text(pResultsChunk, 6));
+	m_chunk.tex_diffuse_path = "database/data/wowCobble.dds";
+	//m_chunk.tex_diffuse_path = "database/data/rock.dds";
+	//m_chunk.tex_diffuse_path = reinterpret_cast<const char*>(sqlite3_column_text(pResultsChunk, 6));
 	m_chunk.tex_splat_alpha_path = reinterpret_cast<const char*>(sqlite3_column_text(pResultsChunk, 7));
 	m_chunk.tex_splat_1_path = reinterpret_cast<const char*>(sqlite3_column_text(pResultsChunk, 8));
 	m_chunk.tex_splat_2_path = reinterpret_cast<const char*>(sqlite3_column_text(pResultsChunk, 9));
@@ -308,7 +309,7 @@ void ToolMain::Tick(MSG* msg)
 	m_d3dRenderer.Tick(&m_toolInputCommands);
 
 
-	if (m_toolInputCommands.LMBdown)
+	if (m_toolInputCommands.LMBdown && m_d3dRenderer.getTerrainEditType() == NOTHING)
 	{
 		m_selectedObject = m_d3dRenderer.MousePicking();
 		m_toolInputCommands.LMBdown = false;
@@ -433,22 +434,5 @@ void ToolMain::UpdateInput(MSG* msg)
 	}
 	else m_toolInputCommands.right = false;
 
-	if (m_keyArray['I'])
-	{
-		m_toolInputCommands.raiseGround = true;
-	}
-	else m_toolInputCommands.raiseGround = false;
 
-	if (m_keyArray['O'])
-	{
-		m_toolInputCommands.lowerGround = true;
-	}
-	else m_toolInputCommands.lowerGround = false;
-
-
-	if (m_keyArray['P'])
-	{
-		m_toolInputCommands.levelGround = true;
-	}
-	else m_toolInputCommands.levelGround = false;
 }

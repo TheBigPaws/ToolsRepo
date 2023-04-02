@@ -15,6 +15,9 @@
 #include <vector>
 
 
+//class ToolMain;
+
+
 // A basic game implementation that creates a D3D11 device and
 // provides a game loop.
 class Game : public DX::IDeviceNotify
@@ -26,7 +29,7 @@ public:
 
 	// Initialization and management
 	void Initialize(HWND window, int width, int height);
-	void SetGridState(bool state);
+	void ChangeGridState();
 
 	// Basic game loop
 	void Tick(InputCommands * Input);
@@ -58,10 +61,15 @@ public:
 	DirectX::SimpleMath::Vector3 getClickingVector();
 
 	int selectedIDobject = 0;
+	bool renderInWireframe = false;
+
+	void setTerrainEditType(TerrainEditType setTo);
+	TerrainEditType getTerrainEditType();
 
 #ifdef DXTK_AUDIO
 	void NewAudioDevice();
 #endif
+
 
 private:
 

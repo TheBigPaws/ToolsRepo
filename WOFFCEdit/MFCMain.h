@@ -34,7 +34,15 @@ private:
 	afx_msg void MenuFileQuit();
 	afx_msg void MenuFileSaveTerrain();
 	afx_msg void MenuEditSelect();
-	afx_msg	void ToolBarButton1();
+
+	afx_msg	void ToolBarButtonSave();
+	afx_msg	void ToolBarButtonGrid();
+	afx_msg	void ToolBarButtonCursor();
+	afx_msg	void ToolBarButtonWireframe();
+
+	afx_msg	void ToolBarButtonRaise();
+	afx_msg	void ToolBarButtonLower();
+	afx_msg	void ToolBarButtonFlatten();
 
 
 	DECLARE_MESSAGE_MAP()	// required macro for message map functionality  One per class

@@ -6,6 +6,11 @@
 //geometric resoltuion - note,  hard coded.
 #define TERRAINRESOLUTION 128
 
+enum TerrainEditType{ RAISE,LOWER,FLATTEN,NOTHING};
+
+
+using namespace DirectX::SimpleMath;
+
 class DisplayChunk
 {
 public:
@@ -29,12 +34,16 @@ public:
 	void levelGround(float dt);
 
 
-	void selectVertex(DirectX::SimpleMath::Vector3 camPos, DirectX::SimpleMath::Vector3 camLookDir);
+	void selectVertex(Vector3 camPos, Vector3 camLookDir);
+	bool RayIntersectsTriangle(Vector3 rayOrigin, Vector3 rayVector, Vector3 v1_t, Vector3 v2_t, Vector3 v3_t, Vector3& outIntersectionPoint); // <- https://en.wikipedia.org/wiki/M%C3%B6ller%E2%80%93Trumbore_intersection_algorithm
+	Vector3 planeIntersectPoint;
+	bool isIntersecting = false;
 
-	float timInc = 0.0f;
-	int selectedVertex[2];
-	//float baseY;
-	bool closeEnough = false;
+	int selectedTriaIndex = -1;
+
+	TerrainEditType currentEditType = NOTHING;
+
+
 private:
 	
 	DirectX::VertexPositionNormalTexture m_terrainGeometry[TERRAINRESOLUTION][TERRAINRESOLUTION];

@@ -87,9 +87,9 @@ void Game::Initialize(HWND window, int width, int height)
 #endif
 }
 
-void Game::SetGridState(bool state)
+void Game::ChangeGridState()
 {
-	m_grid = state;
+	m_grid = !m_grid;
 }
 
 #pragma region Frame Update
@@ -118,6 +118,10 @@ void Game::Tick(InputCommands *Input)
 
 void Game::handleInput(float dt) {
 
+	if (m_displayChunk.currentEditType != NOTHING){
+		m_displayChunk.selectVertex(Camera_.m_camPosition, getClickingVector());
+	}
+
 	//process input and update stuff
 	float dForward = 0.0f;
 	float dRight = 0.0f;
@@ -137,20 +141,41 @@ void Game::handleInput(float dt) {
 	{
 		dRight -=  m_movespeed * dt;
 	}
-	if (m_InputCommands.raiseGround)
+	if (m_InputCommands.RMBdown)
 	{
-		//chunk
-		m_displayChunk.raiseGround(dt);
-	}
-	if (m_InputCommands.lowerGround)
-	{
-		m_displayChunk.lowerGround(dt);
-	}
-	if (m_InputCommands.levelGround)
-	{
-		m_displayChunk.levelGround(dt);
+
+		Camera_.UpdateCameraRotation(m_InputCommands.rotate[0], m_InputCommands.rotate[1], dt);
+
 	}
 
+	if (m_InputCommands.LMBdown)
+	{
+		switch (m_displayChunk.currentEditType) {
+		case NOTHING:
+			//selecting objects
+			//toolRef->m_selectedObject = MousePicking();
+			//toolRef->getInputsRef()->LMBdown = false;
+			break;
+
+		case RAISE:
+			m_displayChunk.raiseGround(dt);
+			break;
+		
+		case LOWER:
+			//m_displayChunk.selectVertex(Camera_.m_camPosition, getClickingVector());
+			m_displayChunk.lowerGround(dt);
+			break;
+		
+		case FLATTEN:
+			//m_displayChunk.selectVertex(Camera_.m_camPosition, getClickingVector());
+			m_displayChunk.levelGround(dt);
+			break;
+
+		default:
+			break;
+		}
+		
+	}
 
 	Camera_.UpdateCameraPosition(dForward, dRight);
 
@@ -163,15 +188,8 @@ void Game::Update(DX::StepTimer const& timer)
 	//TODO  any more complex than this, and the camera should be abstracted out to somewhere else
 	//camera motion is on a plane, so kill the 7 component of the look direction
 
+    
 
-    if (m_InputCommands.RMBdown)
-    {
-
-		Camera_.UpdateCameraRotation(m_InputCommands.rotate[0], m_InputCommands.rotate[1], timer.GetElapsedSeconds());
-
-    }
-
-	m_displayChunk.selectVertex(Camera_.m_camPosition, getClickingVector());
 
 
 	handleInput(timer.GetElapsedSeconds());
@@ -186,6 +204,7 @@ void Game::Update(DX::StepTimer const& timer)
     m_batchEffect->SetWorld(Matrix::Identity);
 	m_displayChunk.m_terrainEffect->SetView(m_view);
 	m_displayChunk.m_terrainEffect->SetWorld(Matrix::Identity);
+
 
 #ifdef DXTK_AUDIO
     m_audioTimerAcc -= (float)timer.GetElapsedSeconds();
@@ -281,17 +300,20 @@ void Game::Render()
 		});
 		
 
-		m_displayList[i].m_model->Draw(context, *m_states, local, m_view, m_projection, false);	//last variable in draw,  make TRUE for wireframe
+		m_displayList[i].m_model->Draw(context, *m_states, local, m_view, m_projection, renderInWireframe);	//last variable in draw,  make TRUE for wireframe
 
 		m_deviceResources->PIXEndEvent();
 	}
     m_deviceResources->PIXEndEvent();
 
 	//RENDER TERRAIN
-	context->OMSetBlendState(m_states->Opaque(), nullptr, 0xFFFFFFFF);
+	context->OMSetBlendState(m_states->AlphaBlend(), nullptr, 0xFFFFFFFF);
 	context->OMSetDepthStencilState(m_states->DepthDefault(),0);
 	context->RSSetState(m_states->CullNone());
-	context->RSSetState(m_states->Wireframe());		//uncomment for wireframe
+
+	if (renderInWireframe) {
+		context->RSSetState(m_states->Wireframe());		//uncomment for wireframe
+	}
 
 	//Render the batch,  This is handled in the Display chunk becuase it has the potential to get complex
 	m_displayChunk.RenderBatch(m_deviceResources);
@@ -346,10 +368,6 @@ void XM_CALLCONV Game::DrawGrid(DirectX::FXMVECTOR origin, float cellSize, float
     m_batch->Begin();
 
 
-	// e: 12  6
-	// s:  5  2
-	//
-	// -6 -4 -2 0 2  6 
 
 	for (float i = int(gridExtent / cellSize) * -cellSize; i < gridExtent; i+= cellSize)
 	{
@@ -371,7 +389,7 @@ void XM_CALLCONV Game::DrawGrid(DirectX::FXMVECTOR origin, float cellSize, float
 
 		m_batch->DrawLine(v1_, v2_);
 
-
+		//m_batch->draw
 
 		for (int j = 1; j < 10; j ++)
 		{
@@ -398,40 +416,7 @@ void XM_CALLCONV Game::DrawGrid(DirectX::FXMVECTOR origin, float cellSize, float
 	}
 
 
-    //for (size_t i = 0; i <= xdivs; ++i)
-    //{
-    //    float fPercent = float(i) / float(xdivs);
-    //    fPercent = (fPercent * 2.0f) - 1.0f;
-    //    XMVECTOR vScale = XMVectorScale(xAxis, fPercent);
-    //    vScale = XMVectorAdd(vScale, origin);
-	//
-    //    VertexPositionColor v1(XMVectorSubtract(vScale, yAxis), color);
-    //    VertexPositionColor v2(XMVectorAdd(vScale, yAxis), color);
-    //    m_batch->DrawLine(v1, v2);
-    //}
-	//
-    //for (size_t i = 0; i <= ydivs; i++)
-    //{
-    //    float fPercent = float(i) / float(ydivs);
-    //    fPercent = (fPercent * 2.0f) - 1.0f;
-    //    XMVECTOR vScale = XMVectorScale(yAxis, fPercent);
-    //    vScale = XMVectorAdd(vScale, origin);
-	//
-    //    VertexPositionColor v1(XMVectorSubtract(vScale, xAxis), color);
-    //    VertexPositionColor v2(XMVectorAdd(vScale, xAxis), color);
-    //    m_batch->DrawLine(v1, v2);
-    //}
-	//
-	//for (int i = 0; i <= 50; i++)
-	//{
-	//
-	//	XMVECTORF32 v1_pos = { i, 10.f, 0.f };
-	//	XMVECTORF32 v2_pos = { i, 0.f, 0.f };
-	//	
-	//	VertexPositionColor v1(v1_pos, color);
-	//	VertexPositionColor v2(v2_pos, color);
-	//	m_batch->DrawLine(v1, v2);
-	//}
+
 
     m_batch->End();
 
@@ -563,6 +548,9 @@ void Game::BuildDisplayChunk(ChunkObject * SceneChunk)
 	m_displayChunk.LoadHeightMap(m_deviceResources);
 	m_displayChunk.m_terrainEffect->SetProjection(m_projection);
 	m_displayChunk.InitialiseBatch();
+
+
+
 }
 
 void Game::SaveDisplayChunk(ChunkObject * SceneChunk)
@@ -700,6 +688,8 @@ std::wstring StringToWCHART(std::string s)
 	return r;
 }
 
+
+
 DirectX::SimpleMath::Vector3 Game::getClickingVector() {
 
 	DirectX::SimpleMath::Vector3 ret_;
@@ -723,6 +713,20 @@ DirectX::SimpleMath::Vector3 Game::getClickingVector() {
 	
 	return ret_;
 
+}
+
+void Game::setTerrainEditType(TerrainEditType setTo) {
+	if (m_displayChunk.currentEditType == setTo) {
+		m_displayChunk.currentEditType = TerrainEditType::NOTHING;
+	}
+	else {
+		m_displayChunk.currentEditType = setTo;
+	}
+}
+
+
+TerrainEditType Game::getTerrainEditType() {
+	return m_displayChunk.currentEditType;
 }
 
 int Game::MousePicking() {

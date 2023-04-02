@@ -14,7 +14,6 @@ DisplayChunk::DisplayChunk()
 	m_textureCoordStep = 1.0 / (TERRAINRESOLUTION-1);	//-1 becuase its split into chunks. not vertices.  we want tthe last one in each row to have tex coord 1
 	m_terrainPositionScalingFactor = m_terrainSize / (TERRAINRESOLUTION-1);
 
-	
 }
 
 
@@ -30,6 +29,9 @@ void DisplayChunk::PopulateChunkData(ChunkObject * SceneChunk)
 	m_chunk_base_resolution = SceneChunk->chunk_base_resolution;
 	m_heightmap_path = SceneChunk->heightmap_path;
 	m_tex_diffuse_path = SceneChunk->tex_diffuse_path;
+
+
+
 	m_tex_splat_alpha_path = SceneChunk->tex_splat_alpha_path;
 	m_tex_splat_1_path = SceneChunk->tex_splat_1_path;
 	m_tex_splat_2_path = SceneChunk->tex_splat_2_path;
@@ -47,23 +49,76 @@ void DisplayChunk::PopulateChunkData(ChunkObject * SceneChunk)
 void DisplayChunk::RenderBatch(std::shared_ptr<DX::DeviceResources>  DevResources)
 {
 	
-	
-	//m_terrainGeometry[selectedVertex[0]][selectedVertex[1]].position.y = baseY + sin(timInc*2) * 5.0f;
 
 	auto context = DevResources->GetD3DDeviceContext();
-
-	m_terrainEffect->Apply(context);
 	context->IASetInputLayout(m_terrainInputLayout.Get());
+	//m_terrainEffect->SetAlpha(0.5f);
+	m_terrainEffect->Apply(context);
 
 	m_batch->Begin();
+
+	
+	int index_;
+
 	for (size_t i = 0; i < TERRAINRESOLUTION-1; i++)	//looping through QUADS.  so we subtrack one from the terrain array or it will try to draw a quad starting with the last vertex in each row. Which wont work
 	{
+		
+
 		for (size_t j = 0; j < TERRAINRESOLUTION-1; j++)//same as above
 		{
-			m_batch->DrawQuad(m_terrainGeometry[i][j], m_terrainGeometry[i][j+1], m_terrainGeometry[i+1][j+1], m_terrainGeometry[i+1][j]); //bottom left bottom right, top right top left.
+			
+			index_ = 2 * ((TERRAINRESOLUTION * i) + j);
+			switch (selectedTriaIndex - index_) {
+			case 0:
+				m_batch->End();
+				m_terrainEffect->SetAlpha(20.0f);
+				m_terrainEffect->Apply(context);
+				m_batch->Begin();
+				m_batch->DrawTriangle(m_terrainGeometry[i][j], m_terrainGeometry[i + 1][j], m_terrainGeometry[i + 1][j + 1]); //bottom left bottom right, top right top left.
+
+
+				m_batch->End();
+				m_terrainEffect->SetAlpha(1.0);
+				m_terrainEffect->Apply(context);
+				m_batch->Begin();
+
+				m_batch->DrawTriangle(m_terrainGeometry[i][j], m_terrainGeometry[i][j + 1], m_terrainGeometry[i + 1][j + 1]); //bottom left bottom right, top right top left.
+
+				break;
+			case 1:
+				m_batch->End();
+				m_terrainEffect->SetAlpha(20.0f);
+				m_terrainEffect->Apply(context);
+				m_batch->Begin();
+				m_batch->DrawTriangle(m_terrainGeometry[i][j], m_terrainGeometry[i][j + 1], m_terrainGeometry[i + 1][j + 1]); //bottom left bottom right, top right top left.
+
+
+
+				m_batch->End();
+				m_terrainEffect->SetAlpha(1.0);
+				m_terrainEffect->Apply(context);
+				m_batch->Begin();
+				m_batch->DrawTriangle(m_terrainGeometry[i][j], m_terrainGeometry[i + 1][j], m_terrainGeometry[i + 1][j + 1]); //bottom left bottom right, top right top left.
+
+
+				break;
+			default:
+				m_batch->DrawTriangle(m_terrainGeometry[i][j], m_terrainGeometry[i][j + 1], m_terrainGeometry[i + 1][j + 1]); //bottom left bottom right, top right top left.
+				m_batch->DrawTriangle(m_terrainGeometry[i][j], m_terrainGeometry[i + 1][j], m_terrainGeometry[i + 1][j + 1]); //bottom left bottom right, top right top left.
+				break;
+			}
+			
+			
+			//m_batch->DrawQuad(m_terrainGeometry[i][j], m_terrainGeometry[i][j+1], m_terrainGeometry[i+1][j+1], m_terrainGeometry[i+1][j]); //bottom left bottom right, top right top left.
 		}
+
 	}
+
+
+	
+
 	m_batch->End();
+
 }
 
 void DisplayChunk::InitialiseBatch()
@@ -80,71 +135,53 @@ void DisplayChunk::InitialiseBatch()
 			m_terrainGeometry[i][j].position =			Vector3(j*m_terrainPositionScalingFactor-(0.5*m_terrainSize), (float)(m_heightMap[index])*m_terrainHeightScale, i*m_terrainPositionScalingFactor-(0.5*m_terrainSize));	//This will create a terrain going from -64->64.  rather than 0->128.  So the center of the terrain is on the origin
 			m_terrainGeometry[i][j].normal =			Vector3(0.0f, 1.0f, 0.0f);						//standard y =up
 			m_terrainGeometry[i][j].textureCoordinate =	Vector2(((float)m_textureCoordStep*j)*m_tex_diffuse_tiling, ((float)m_textureCoordStep*i)*m_tex_diffuse_tiling);				//Spread tex coords so that its distributed evenly across the terrain from 0-1
-  
 			
 		}
 	}
 	CalculateTerrainNormals();
 
-	selectedVertex[0] = TERRAINRESOLUTION/2;
-	selectedVertex[1] = TERRAINRESOLUTION/2;
-
-	//baseY = m_terrainGeometry[selectedVertex[0]][selectedVertex[1]].position.y;
 	
 }
 
 
 void DisplayChunk::selectVertex(DirectX::SimpleMath::Vector3 camPos, DirectX::SimpleMath::Vector3 camLookDir){
 
-
-	for (size_t i = 0; i < TERRAINRESOLUTION; i++)
+	isIntersecting = false;
+	selectedTriaIndex = -1;
+	float closestDistance = 999999;
+	for (size_t i = 0; i < TERRAINRESOLUTION-1; i++)
 	{
-		for (size_t j = 0; j < TERRAINRESOLUTION; j++)
+		for (size_t j = 0; j < TERRAINRESOLUTION-1; j++)
 		{
-			//distance from point
-			float thisVDist = (m_terrainGeometry[i][j].position - camPos).Cross(camLookDir).Length() / camLookDir.Length();
-			float oldSelected = (m_terrainGeometry[selectedVertex[0]][selectedVertex[1]].position - camPos).Cross(camLookDir).Length() / camLookDir.Length();
-	
-			if (thisVDist < oldSelected) {
-				//m_terrainGeometry[selectedVertex[0]][selectedVertex[1]].position.y = baseY;
-	
-				selectedVertex[0] = i;
-				selectedVertex[1] = j;
-				//baseY = m_terrainGeometry[selectedVertex[0]][selectedVertex[1]].position.y;
-	
-				if (thisVDist < 5) {
-					closeEnough = true;
-				}
-				else {
-					closeEnough = false;
-				}
-	
+			
+			int index_ = 2 * ((TERRAINRESOLUTION * i) + j);
+			Vector3 outPos;
+			if (RayIntersectsTriangle(camPos,camLookDir, m_terrainGeometry[i][j].position, m_terrainGeometry[i+1][j].position, m_terrainGeometry[i + 1][j + 1].position,outPos) && (Vector3(m_terrainGeometry[i][j].position) - camPos).Length() < closestDistance) {
+
+				closestDistance = (outPos - camPos).Length();
+				planeIntersectPoint = outPos;
+				isIntersecting = true;
+				
+				selectedTriaIndex = index_;
+
+			}
+			if (RayIntersectsTriangle(camPos, camLookDir, m_terrainGeometry[i][j].position, m_terrainGeometry[i][j + 1].position, m_terrainGeometry[i + 1][j + 1].position, outPos) && (Vector3(m_terrainGeometry[i][j].position) - camPos).Length() < closestDistance) {
+
+				closestDistance = (outPos - camPos).Length();
+				planeIntersectPoint = outPos;
+				isIntersecting = true;
+				selectedTriaIndex = index_ + 1;
 			}
 			
 		}
 	}
 
 
-	//implement intersection
-	//for (size_t i = 0; i < TERRAINRESOLUTION-1; i++)
-	//{
-	//	for (size_t j = 0; j < TERRAINRESOLUTION-1; j++)
-	//	{
-	//		DirectX::SimpleMath::Vector3 p1 = m_terrainGeometry[i][j].position;
-	//		DirectX::SimpleMath::Vector3 p1_ = m_terrainGeometry[i+1][j+1].position;
-	//		DirectX::SimpleMath::Vector3 p2 = m_terrainGeometry[i+1][j].position;;
-	//		DirectX::SimpleMath::Vector3 p3 = m_terrainGeometry[i][j+1].position;
-	//
-	//
-	//		DirectX::SimpleMath::Vector3 q1 = camPos;
-	//		DirectX::SimpleMath::Vector3 q2 = camPos + camLookDir * 100000;
-	//	}
-	//}
-
 }
 
 void DisplayChunk::raiseGround(float dt) {
-	if (!closeEnough) {
+
+	if (!isIntersecting) {
 		return;
 	}
 
@@ -153,7 +190,7 @@ void DisplayChunk::raiseGround(float dt) {
 		for (size_t j = 0; j < TERRAINRESOLUTION; j++)
 		{
 
-			float Pdist = (m_terrainGeometry[selectedVertex[0]][selectedVertex[1]].position - m_terrainGeometry[i][j].position).Length();
+			float Pdist = (planeIntersectPoint - m_terrainGeometry[i][j].position).Length();
 			float interactRadius = 10.0f;
 			float raiseSpeed = 3.0f;
 
@@ -167,7 +204,7 @@ void DisplayChunk::raiseGround(float dt) {
 
 void DisplayChunk::lowerGround(float dt) {
 
-	if (!closeEnough) {
+	if (!isIntersecting) {
 		return;
 	}
 
@@ -176,7 +213,7 @@ void DisplayChunk::lowerGround(float dt) {
 		for (size_t j = 0; j < TERRAINRESOLUTION; j++)
 		{
 
-			float Pdist = (m_terrainGeometry[selectedVertex[0]][selectedVertex[1]].position - m_terrainGeometry[i][j].position).Length();
+			float Pdist = (planeIntersectPoint - m_terrainGeometry[i][j].position).Length();
 			float interactRadius = 10.0f;
 			float raiseSpeed = 3.0f;
 
@@ -189,7 +226,7 @@ void DisplayChunk::lowerGround(float dt) {
 }
 
 void DisplayChunk::levelGround(float dt) {
-	if (!closeEnough) {
+	if (!isIntersecting) {
 		return;
 	}
 
@@ -198,7 +235,7 @@ void DisplayChunk::levelGround(float dt) {
 		for (size_t j = 0; j < TERRAINRESOLUTION; j++)
 		{
 
-			DirectX::SimpleMath::Vector3 distanceVector = m_terrainGeometry[selectedVertex[0]][selectedVertex[1]].position - m_terrainGeometry[i][j].position;
+			DirectX::SimpleMath::Vector3 distanceVector = planeIntersectPoint - m_terrainGeometry[i][j].position;
 			distanceVector.y = 0;
 
 			float Pdist = distanceVector.Length();
@@ -207,18 +244,17 @@ void DisplayChunk::levelGround(float dt) {
 
 			if (Pdist < interactRadius) {
 
-				float Ydir = m_terrainGeometry[selectedVertex[0]][selectedVertex[1]].position.y - m_terrainGeometry[i][j].position.y;
+				float Ydir = planeIntersectPoint.y - m_terrainGeometry[i][j].position.y;
 
 				if (abs(Ydir) > 0) {
 					m_terrainGeometry[i][j].position.y += dt * raiseSpeed * (Ydir / abs(Ydir));
 
-					if (abs(m_terrainGeometry[selectedVertex[0]][selectedVertex[1]].position.y - m_terrainGeometry[i][j].position.y) < 2.0f) {
-						m_terrainGeometry[i][j].position.y = m_terrainGeometry[selectedVertex[0]][selectedVertex[1]].position.y;
+					if (abs(planeIntersectPoint.y - m_terrainGeometry[i][j].position.y) < 0.5f) {
+						m_terrainGeometry[i][j].position.y = planeIntersectPoint.y;
 					}
 
 				}
 
-				//m_terrainGeometry[i][j].position.y -= (1.0f - Pdist / interactRadius) * dt * raiseSpeed;
 			}
 
 		}
@@ -355,4 +391,40 @@ void DisplayChunk::CalculateTerrainNormals()
 			m_terrainGeometry[i][j].normal = normalVector;	//set the normal for this point based on our result
 		}
 	}
+}
+
+
+//https://en.wikipedia.org/wiki/M%C3%B6ller%E2%80%93Trumbore_intersection_algorithm
+bool DisplayChunk::RayIntersectsTriangle(Vector3 rayOrigin, Vector3 rayVector, Vector3 v1_t, Vector3 v2_t, Vector3 v3_t, Vector3& outIntersectionPoint)
+{
+	const float EPSILON = 0.0000001;
+	Vector3 vertex0 = v1_t;
+	Vector3 vertex1 = v2_t;
+	Vector3 vertex2 = v3_t;
+	Vector3 edge1, edge2, h, s, q;
+	float a, f, u, v;
+	edge1 = vertex1 - vertex0;
+	edge2 = vertex2 - vertex0;
+	h = rayVector.Cross(edge2);
+	a = edge1.Dot(h);
+	if (a > -EPSILON && a < EPSILON)
+		return false;    // This ray is parallel to this triangle.
+	f = 1.0 / a;
+	s = rayOrigin - vertex0;
+	u = f * s.Dot(h);
+	if (u < 0.0 || u > 1.0)
+		return false;
+	q = s.Cross(edge1);
+	v = f * rayVector.Dot(q);
+	if (v < 0.0 || u + v > 1.0)
+		return false;
+	// At this stage we can compute t to find out where the intersection point is on the line.
+	float t = f * edge2.Dot(q);
+	if (t > EPSILON) // ray intersection
+	{
+		outIntersectionPoint = rayOrigin + rayVector * t;
+		return true;
+	}
+	else // This means that there is a line intersection but not a ray intersection.
+		return false;
 }
