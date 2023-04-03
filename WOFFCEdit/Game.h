@@ -87,6 +87,7 @@ private:
 	//tool specific
 	std::vector<DisplayObject>			m_displayList;
 	DisplayChunk						m_displayChunk;
+	DisplayChunk						m_displayChunk_Two;
 	InputCommands						m_InputCommands;
 
 	//functionality

@@ -177,9 +177,8 @@ void ToolMain::onActionLoad()
 	m_chunk.chunk_y_size_metres = sqlite3_column_int(pResultsChunk, 3);
 	m_chunk.chunk_base_resolution = sqlite3_column_int(pResultsChunk, 4);
 	m_chunk.heightmap_path = reinterpret_cast<const char*>(sqlite3_column_text(pResultsChunk, 5));
-	m_chunk.tex_diffuse_path = "database/data/wowCobble.dds";
 	//m_chunk.tex_diffuse_path = "database/data/rock.dds";
-	//m_chunk.tex_diffuse_path = reinterpret_cast<const char*>(sqlite3_column_text(pResultsChunk, 6));
+	m_chunk.tex_diffuse_path = reinterpret_cast<const char*>(sqlite3_column_text(pResultsChunk, 6));
 	m_chunk.tex_splat_alpha_path = reinterpret_cast<const char*>(sqlite3_column_text(pResultsChunk, 7));
 	m_chunk.tex_splat_1_path = reinterpret_cast<const char*>(sqlite3_column_text(pResultsChunk, 8));
 	m_chunk.tex_splat_2_path = reinterpret_cast<const char*>(sqlite3_column_text(pResultsChunk, 9));
