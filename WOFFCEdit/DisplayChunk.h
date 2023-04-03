@@ -27,12 +27,15 @@ public:
 	std::unique_ptr<DirectX::BasicEffect>       m_terrainEffect;
 
 	ID3D11ShaderResourceView *					m_texture_diffuse;				//diffuse texture
+	ID3D11ShaderResourceView *					m_texture_diffuse2;				//diffuse texture
 	Microsoft::WRL::ComPtr<ID3D11InputLayout>   m_terrainInputLayout;
+
 
 	void raiseGround(float dt);
 	void lowerGround(float dt);
 	void levelGround(float dt);
 
+	float getYatPos(Vector3 pos_);
 
 	void selectVertex(Vector3 camPos, Vector3 camLookDir);
 	bool RayIntersectsTriangle(Vector3 rayOrigin, Vector3 rayVector, Vector3 v1_t, Vector3 v2_t, Vector3 v3_t, Vector3& outIntersectionPoint); // <- https://en.wikipedia.org/wiki/M%C3%B6ller%E2%80%93Trumbore_intersection_algorithm
@@ -44,6 +47,13 @@ public:
 	TerrainEditType currentEditType = NOTHING;
 
 
+	Vector2 getIndicesOfTriangleUnderPos(Vector3 pos);
+
+
+	float terrainEditRadius = 10.0f;
+	float terrainEditSpeed = 10.0f;
+
+	//float terrainAlphas[2 * (TERRAINRESOLUTION - 1) * (TERRAINRESOLUTION - 1)];
 private:
 	
 	DirectX::VertexPositionNormalTexture m_terrainGeometry[TERRAINRESOLUTION][TERRAINRESOLUTION];

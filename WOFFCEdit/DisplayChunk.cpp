@@ -48,11 +48,12 @@ void DisplayChunk::PopulateChunkData(ChunkObject * SceneChunk)
 
 void DisplayChunk::RenderBatch(std::shared_ptr<DX::DeviceResources>  DevResources)
 {
-	
+
 
 	auto context = DevResources->GetD3DDeviceContext();
 	context->IASetInputLayout(m_terrainInputLayout.Get());
 	//m_terrainEffect->SetAlpha(0.5f);
+	//context
 	m_terrainEffect->Apply(context);
 
 	m_batch->Begin();
@@ -103,6 +104,8 @@ void DisplayChunk::RenderBatch(std::shared_ptr<DX::DeviceResources>  DevResource
 
 				break;*/
 			default:
+				m_terrainEffect->SetTexture(m_texture_diffuse2);
+
 				m_batch->DrawTriangle(m_terrainGeometry[i][j], m_terrainGeometry[i][j + 1], m_terrainGeometry[i + 1][j + 1]); //bottom left bottom right, top right top left.
 				m_batch->DrawTriangle(m_terrainGeometry[i][j], m_terrainGeometry[i + 1][j], m_terrainGeometry[i + 1][j + 1]); //bottom left bottom right, top right top left.
 				break;
@@ -123,6 +126,9 @@ void DisplayChunk::RenderBatch(std::shared_ptr<DX::DeviceResources>  DevResource
 
 void DisplayChunk::InitialiseBatch()
 {
+
+	//m_chunk.tex_diffuse_path = "database/data/rock.dds";
+
 	//build geometry for our terrain array
 	//iterate through all the vertices of our required resolution terrain.
 	int index = 0;
@@ -131,6 +137,10 @@ void DisplayChunk::InitialiseBatch()
 	{
 		for (size_t j = 0; j < TERRAINRESOLUTION; j++)
 		{
+
+			if (i < TERRAINRESOLUTION - 1 && j < TERRAINRESOLUTION - 1) {
+
+			}
 
 			index = (TERRAINRESOLUTION * i) + j;
 			m_terrainGeometry[i][j].position =			Vector3(j*m_terrainPositionScalingFactor-(0.5*m_terrainSize), (float)(m_heightMap[index])*m_terrainHeightScale, i*m_terrainPositionScalingFactor-(0.5*m_terrainSize));	//This will create a terrain going from -64->64.  rather than 0->128.  So the center of the terrain is on the origin
@@ -144,13 +154,35 @@ void DisplayChunk::InitialiseBatch()
 	//terrain pos scaling is 4
 	//terraub=inSize is 512
 
+
+
 	CalculateTerrainNormals();
 
 	
 }
 
+float DisplayChunk::getYatPos(Vector3 pos_) {
+	float ret_ = 0.0f;
+
+	Vector2 indices_ = getIndicesOfTriangleUnderPos(pos_);
+
+	//RayIntersectsTriangle(Vector3(pos_.x,pos_.y + 10,pos_.z),Vector3(0,-1000,0),)
+	Vector3 outPos;
+	if (RayIntersectsTriangle(Vector3(pos_.x, pos_.y + 10, pos_.z), Vector3(0, -1000, 0), m_terrainGeometry[int(indices_.x)][int(indices_.y)].position, m_terrainGeometry[int(indices_.x) + 1][int(indices_.y)].position, m_terrainGeometry[int(indices_.x) + 1][int(indices_.y) + 1].position, outPos)){
+
+		ret_ = outPos.y;
+	}
+	if (RayIntersectsTriangle(Vector3(pos_.x, pos_.y + 10, pos_.z), Vector3(0, -1000, 0), m_terrainGeometry[int(indices_.x)][int(indices_.y)].position, m_terrainGeometry[int(indices_.x)][int(indices_.y) + 1].position, m_terrainGeometry[int(indices_.x) + 1][int(indices_.y) + 1].position, outPos)){
+
+		ret_ = outPos.y;
+	}
+	return ret_;
+}
+
 
 void DisplayChunk::selectVertex(DirectX::SimpleMath::Vector3 camPos, DirectX::SimpleMath::Vector3 camLookDir){
+
+
 
 	isIntersecting = false;
 	selectedTriaIndex = -1;
@@ -185,6 +217,20 @@ void DisplayChunk::selectVertex(DirectX::SimpleMath::Vector3 camPos, DirectX::Si
 
 }
 
+Vector2 DisplayChunk::getIndicesOfTriangleUnderPos(Vector3 pos) {
+	Vector2 retV;
+
+	//j*m_terrainPositionScalingFactor-(0.5*m_terrainSize)
+	int i_ = (pos.z + m_terrainSize * 0.5) / m_terrainPositionScalingFactor;
+
+	int j_ = (pos.x + m_terrainSize*0.5)/ m_terrainPositionScalingFactor;
+
+	retV.x = i_;
+	retV.y = j_;
+
+	return retV;
+}
+
 void DisplayChunk::raiseGround(float dt) {
 
 	if (!isIntersecting) {
@@ -197,11 +243,9 @@ void DisplayChunk::raiseGround(float dt) {
 		{
 
 			float Pdist = (planeIntersectPoint - m_terrainGeometry[i][j].position).Length();
-			float interactRadius = 10.0f;
-			float raiseSpeed = 3.0f;
 
-			if (Pdist< interactRadius) {
-				m_terrainGeometry[i][j].position.y += (1.0f - Pdist/interactRadius) * dt* raiseSpeed;
+			if (Pdist< terrainEditRadius) {
+				m_terrainGeometry[i][j].position.y += (1.0f - Pdist/ terrainEditRadius) * dt* terrainEditSpeed;
 			}
 
 		}
@@ -220,11 +264,9 @@ void DisplayChunk::lowerGround(float dt) {
 		{
 
 			float Pdist = (planeIntersectPoint - m_terrainGeometry[i][j].position).Length();
-			float interactRadius = 10.0f;
-			float raiseSpeed = 3.0f;
 
-			if (Pdist < interactRadius) {
-				m_terrainGeometry[i][j].position.y -= (1.0f - Pdist / interactRadius) * dt * raiseSpeed;
+			if (Pdist < terrainEditRadius) {
+				m_terrainGeometry[i][j].position.y -= (1.0f - Pdist / terrainEditRadius) * dt * terrainEditSpeed;
 			}
 
 		}
@@ -245,17 +287,16 @@ void DisplayChunk::levelGround(float dt) {
 			distanceVector.y = 0;
 
 			float Pdist = distanceVector.Length();
-			float interactRadius = 10.0f;
-			float raiseSpeed = 3.0f;
 
-			if (Pdist < interactRadius) {
+
+			if (Pdist < terrainEditRadius) {
 
 				float Ydir = planeIntersectPoint.y - m_terrainGeometry[i][j].position.y;
 
 				if (abs(Ydir) > 0) {
-					m_terrainGeometry[i][j].position.y += dt * raiseSpeed * (Ydir / abs(Ydir));
+					m_terrainGeometry[i][j].position.y += dt * terrainEditSpeed * (Ydir / abs(Ydir));
 
-					if (abs(planeIntersectPoint.y - m_terrainGeometry[i][j].position.y) < 0.5f) {
+					if (abs(planeIntersectPoint.y - m_terrainGeometry[i][j].position.y) < 0.25f) {
 						m_terrainGeometry[i][j].position.y = planeIntersectPoint.y;
 					}
 
@@ -270,6 +311,8 @@ void DisplayChunk::levelGround(float dt) {
 
 void DisplayChunk::LoadHeightMap(std::shared_ptr<DX::DeviceResources>  DevResources)
 {
+
+
 	auto device = DevResources->GetD3DDevice();
 	auto devicecontext = DevResources->GetD3DDeviceContext();
 
@@ -296,10 +339,17 @@ void DisplayChunk::LoadHeightMap(std::shared_ptr<DX::DeviceResources>  DevResour
 	//load in texture diffuse
 	
 	//load the diffuse texture
+	//m_tex_diffuse_path = "database/data/rock.dds";
+
 	std::wstring texturewstr = StringToWCHART(m_tex_diffuse_path);
 	HRESULT rs;	
 	rs = CreateDDSTextureFromFile(device, texturewstr.c_str(), NULL, &m_texture_diffuse);	//load tex into Shader resource	view and resource
 	
+	std::wstring texturewstr2 = StringToWCHART("database/data/rock.dds");
+	HRESULT rs2;
+	rs2 = CreateDDSTextureFromFile(device, texturewstr2.c_str(), NULL, &m_texture_diffuse2);	//load tex into Shader resource	view and resource
+
+
 	//setup terrain effect
 	m_terrainEffect = std::make_unique<BasicEffect>(device);
 	m_terrainEffect->EnableDefaultLighting();

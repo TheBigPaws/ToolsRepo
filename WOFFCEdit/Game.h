@@ -49,7 +49,7 @@ public:
 	void OnResuming();
 	void OnWindowSizeChanged(int width, int height);
 
-	void drawEditCircle();
+	void drawCircleOnTerrain(float radius);
 
 	//tool specific
 	void BuildDisplayList(std::vector<SceneObject> * SceneGraph); //note vector passed by reference 
