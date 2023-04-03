@@ -25,7 +25,7 @@ Game::Game()
 	m_grid = false;
 
 	//functional
-	m_movespeed = 5.0f;
+	m_movespeed = 15.0f;
 
 
 }
@@ -119,7 +119,11 @@ void Game::Tick(InputCommands *Input)
 void Game::handleInput(float dt) {
 
 	if (m_displayChunk.currentEditType != NOTHING){
+		
 		m_displayChunk.selectVertex(Camera_.m_camPosition, getClickingVector());
+
+		
+
 	}
 
 	//process input and update stuff
@@ -187,7 +191,7 @@ void Game::Update(DX::StepTimer const& timer)
 {
 	//TODO  any more complex than this, and the camera should be abstracted out to somewhere else
 	//camera motion is on a plane, so kill the 7 component of the look direction
-
+	timeIt += timer.GetElapsedSeconds();
     
 
 
@@ -235,6 +239,79 @@ void Game::Update(DX::StepTimer const& timer)
 }
 #pragma endregion
 
+
+
+void Game::drawEditCircle() {
+	auto context = m_deviceResources->GetD3DDeviceContext();
+	m_batchEffect->Apply(context);
+	context->IASetInputLayout(m_batchInputLayout.Get());
+	//render circle 
+	m_batch->Begin();
+
+	Vector3 pI = m_displayChunk.planeIntersectPoint;
+
+	XMVECTORF32 v1_pos1_u = { pI.x,pI.y,pI.z};
+	XMVECTORF32 v1_pos2_u = { pI.x,pI.y + 5 + sin(timeIt*2)*2,pI.z};
+
+
+	VertexPositionColor v1_upper(XMVectorAdd(v1_pos1_u, g_XMZero), Colors::White);
+	VertexPositionColor v2_upper(XMVectorAdd(v1_pos2_u, g_XMZero), Colors::White);
+
+	m_batch->DrawLine(v1_upper, v2_upper);
+
+	int vertexCount = 24;
+	double segRotationAngle = (360.0 / vertexCount) * (3.14159265 / 180);
+
+
+	float centerX = pI.x;
+	float centerY = pI.z;
+
+	// Set the starting point for the initial generated vertex. We'll be rotating this point around the origin in the loop
+	double radius = 5.0;
+	double startX = 0.0 - radius;
+	double startY = 0.0;
+
+
+	for (int i = 1; i < vertexCount + 1; i++)
+	{
+		// Calculate the angle to rotate the starting point around the origin
+		double finalSegRotationAngle = (i * segRotationAngle);
+
+		Vector3 resultPos = Vector3(0, pI.y, 0);
+		Vector3 resultPos_next = Vector3(0, pI.y, 0);
+
+		// Rotate the start point around the origin (0, 0) by the finalSegRotationAngle (see https://en.wikipedia.org/wiki/Rotation_(mathematics) section on two dimensional rotation)
+		resultPos.x = cos(finalSegRotationAngle) * startX - sin(finalSegRotationAngle) * startY;
+		resultPos.z = cos(finalSegRotationAngle) * startY + sin(finalSegRotationAngle) * startX;
+
+		// Rotate the start point around the origin (0, 0) by the finalSegRotationAngle (see https://en.wikipedia.org/wiki/Rotation_(mathematics) section on two dimensional rotation)
+		resultPos_next.x = cos(finalSegRotationAngle + segRotationAngle) * startX - sin(finalSegRotationAngle + segRotationAngle) * startY;
+		resultPos_next.z = cos(finalSegRotationAngle + segRotationAngle) * startY + sin(finalSegRotationAngle + segRotationAngle) * startX;
+
+		// Set the point relative to our defined center (in this case the center of the screen)
+		resultPos.x += centerX;
+		resultPos.z += centerY;
+
+		// Set the point relative to our defined center (in this case the center of the screen)
+		resultPos_next.x += centerX;
+		resultPos_next.z += centerY;
+
+		XMVECTORF32 v1_pos1 = { resultPos.x,resultPos.y,resultPos.z };
+		XMVECTORF32 v1_pos2 = { resultPos_next.x,resultPos_next.y,resultPos_next.z };
+
+
+		VertexPositionColor v1(XMVectorAdd(v1_pos1, g_XMZero), Colors::White);
+		VertexPositionColor v2(XMVectorAdd(v1_pos2, g_XMZero), Colors::White);
+
+		m_batch->DrawLine(v1, v2);
+	}
+
+
+	m_batch->End();
+	////END
+}
+
+
 #pragma region Frame Render
 // Draws the scene.
 void Game::Render()
@@ -257,6 +334,10 @@ void Game::Render()
 		const XMVECTORF32 yaxis = { 0.f, 0.f, 512.f };
 		DrawGrid(g_XMZero, 10.0f, 500.0f);
 	}
+
+	drawEditCircle();
+
+
 	//CAMERA POSITION ON HUD
 	m_sprites->Begin();
 	WCHAR   Buffer[256];
@@ -366,7 +447,6 @@ void XM_CALLCONV Game::DrawGrid(DirectX::FXMVECTOR origin, float cellSize, float
     context->IASetInputLayout(m_batchInputLayout.Get());
 
     m_batch->Begin();
-
 
 
 	for (float i = int(gridExtent / cellSize) * -cellSize; i < gridExtent; i+= cellSize)

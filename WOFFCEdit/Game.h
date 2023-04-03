@@ -49,6 +49,8 @@ public:
 	void OnResuming();
 	void OnWindowSizeChanged(int width, int height);
 
+	void drawEditCircle();
+
 	//tool specific
 	void BuildDisplayList(std::vector<SceneObject> * SceneGraph); //note vector passed by reference 
 	void BuildDisplayChunk(ChunkObject *SceneChunk);
@@ -66,6 +68,8 @@ public:
 	void setTerrainEditType(TerrainEditType setTo);
 	TerrainEditType getTerrainEditType();
 
+
+	float timeIt = 0.0f;
 #ifdef DXTK_AUDIO
 	void NewAudioDevice();
 #endif

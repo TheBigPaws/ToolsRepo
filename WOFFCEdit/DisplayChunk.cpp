@@ -69,7 +69,7 @@ void DisplayChunk::RenderBatch(std::shared_ptr<DX::DeviceResources>  DevResource
 			
 			index_ = 2 * ((TERRAINRESOLUTION * i) + j);
 			switch (selectedTriaIndex - index_) {
-			case 0:
+			/*case 0:
 				m_batch->End();
 				m_terrainEffect->SetAlpha(20.0f);
 				m_terrainEffect->Apply(context);
@@ -101,7 +101,7 @@ void DisplayChunk::RenderBatch(std::shared_ptr<DX::DeviceResources>  DevResource
 				m_batch->DrawTriangle(m_terrainGeometry[i][j], m_terrainGeometry[i + 1][j], m_terrainGeometry[i + 1][j + 1]); //bottom left bottom right, top right top left.
 
 
-				break;
+				break;*/
 			default:
 				m_batch->DrawTriangle(m_terrainGeometry[i][j], m_terrainGeometry[i][j + 1], m_terrainGeometry[i + 1][j + 1]); //bottom left bottom right, top right top left.
 				m_batch->DrawTriangle(m_terrainGeometry[i][j], m_terrainGeometry[i + 1][j], m_terrainGeometry[i + 1][j + 1]); //bottom left bottom right, top right top left.
@@ -131,6 +131,7 @@ void DisplayChunk::InitialiseBatch()
 	{
 		for (size_t j = 0; j < TERRAINRESOLUTION; j++)
 		{
+
 			index = (TERRAINRESOLUTION * i) + j;
 			m_terrainGeometry[i][j].position =			Vector3(j*m_terrainPositionScalingFactor-(0.5*m_terrainSize), (float)(m_heightMap[index])*m_terrainHeightScale, i*m_terrainPositionScalingFactor-(0.5*m_terrainSize));	//This will create a terrain going from -64->64.  rather than 0->128.  So the center of the terrain is on the origin
 			m_terrainGeometry[i][j].normal =			Vector3(0.0f, 1.0f, 0.0f);						//standard y =up
@@ -138,6 +139,11 @@ void DisplayChunk::InitialiseBatch()
 			
 		}
 	}
+	//terr reso = 128
+	//-256 , -256 to 256, 256
+	//terrain pos scaling is 4
+	//terraub=inSize is 512
+
 	CalculateTerrainNormals();
 
 	
