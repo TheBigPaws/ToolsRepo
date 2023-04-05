@@ -52,9 +52,8 @@ void DisplayChunk::RenderBatch(std::shared_ptr<DX::DeviceResources>  DevResource
 
 	auto context = DevResources->GetD3DDeviceContext();
 	context->IASetInputLayout(m_terrainInputLayout.Get());
-	float lastAlpha = terrainAlphas[0][0];
-	m_terrainEffect->SetAlpha(lastAlpha);
-	//context
+	float lastTXT = terrainTexturesHolder[0][0];
+	m_terrainEffect->SetTexture(m_texture_diffuse[lastTXT]);
 	m_terrainEffect->Apply(context);
 
 	m_batch->Begin();
@@ -68,12 +67,13 @@ void DisplayChunk::RenderBatch(std::shared_ptr<DX::DeviceResources>  DevResource
 		for (size_t j = 0; j < TERRAINRESOLUTION-1; j++)//same as above
 		{
 
-			bool changeBatches = false;
+			//bool changeBatches = false;
 
-			if (terrainAlphas[i][j] != lastAlpha) {
+			if (terrainTexturesHolder[i][j] != lastTXT) {
 				m_batch->End();
-				m_terrainEffect->SetAlpha(0.25f * (terrainAlphas[i][j] + terrainAlphas[i+1][j] + terrainAlphas[i][j+1] + terrainAlphas[i+1][j+1]));
+				m_terrainEffect->SetTexture(m_texture_diffuse[lastTXT]);
 				m_terrainEffect->Apply(context);
+				lastTXT = terrainTexturesHolder[i][j];
 				m_batch->Begin();
 			}
 			m_batch->DrawQuad(m_terrainGeometry[i][j], m_terrainGeometry[i][j + 1], m_terrainGeometry[i + 1][j + 1], m_terrainGeometry[i + 1][j]); //bottom left bottom right, top right top left.
@@ -109,7 +109,7 @@ m_batch->End();
 
 }
 
-void DisplayChunk::InitialiseBatch(float offsetY, float initialAlpha)
+void DisplayChunk::InitialiseBatch()
 {
 
 	//m_chunk.tex_diffuse_path = "database/data/rock.dds";
@@ -123,9 +123,8 @@ void DisplayChunk::InitialiseBatch(float offsetY, float initialAlpha)
 		for (size_t j = 0; j < TERRAINRESOLUTION; j++)
 		{
 
-			terrainAlphas[i][j] = initialAlpha;
 			index = (TERRAINRESOLUTION * i) + j;
-			m_terrainGeometry[i][j].position = Vector3(j * m_terrainPositionScalingFactor - (0.5 * m_terrainSize), (float)(m_heightMap[index]) * m_terrainHeightScale + offsetY, i * m_terrainPositionScalingFactor - (0.5 * m_terrainSize));	//This will create a terrain going from -64->64.  rather than 0->128.  So the center of the terrain is on the origin
+			m_terrainGeometry[i][j].position = Vector3(j * m_terrainPositionScalingFactor - (0.5 * m_terrainSize), (float)(m_heightMap[index]) * m_terrainHeightScale, i * m_terrainPositionScalingFactor - (0.5 * m_terrainSize));	//This will create a terrain going from -64->64.  rather than 0->128.  So the center of the terrain is on the origin
 			m_terrainGeometry[i][j].normal = Vector3(0.0f, 1.0f, 0.0f);						//standard y =up
 			m_terrainGeometry[i][j].textureCoordinate = Vector2(((float)m_textureCoordStep * j) * m_tex_diffuse_tiling, ((float)m_textureCoordStep * i) * m_tex_diffuse_tiling);				//Spread tex coords so that its distributed evenly across the terrain from 0-1
 
@@ -333,37 +332,24 @@ void DisplayChunk::paintGround(float dt, int paintType) {
 		return;
 	}
 
-	for (size_t i = 0; i < TERRAINRESOLUTION; i++)
+	for (size_t i = 0; i < TERRAINRESOLUTION - 1; i++)
 	{
-		for (size_t j = 0; j < TERRAINRESOLUTION; j++)
+		for (size_t j = 0; j < TERRAINRESOLUTION - 1; j++)
 		{
 
 			//Vector2 triaIndices
 
-			DirectX::SimpleMath::Vector3 distanceVector = planeIntersectPoint - m_terrainGeometry[i][j].position;
+			Vector3 avgPos = m_terrainGeometry[i][j].position + m_terrainGeometry[i+1][j].position + m_terrainGeometry[i][j+1].position + m_terrainGeometry[i+1][j+1].position;
+			avgPos /= 4;
+			
+			DirectX::SimpleMath::Vector3 distanceVector = planeIntersectPoint - avgPos;
 			//distanceVector.y = 0;
 
 			float Pdist = distanceVector.Length();
 
 
-			if (Pdist < terrainEditRadius) {
-
-				if (paintType == myTextureType && terrainAlphas[i][j] < 1.0f) {
-					terrainAlphas[i][j] += (1.0f - Pdist / terrainEditRadius) * dt * terrainEditSpeed;
-
-					if (terrainAlphas[i][j] > 1.0f) {
-						terrainAlphas[i][j] = 1.0f;
-					}
-
-				}
-				else if (paintType != myTextureType && terrainAlphas[i][j] > 0.0f) {
-					terrainAlphas[i][j] -= (1.0f - Pdist / terrainEditRadius) * dt * terrainEditSpeed;
-
-					if (terrainAlphas[i][j] < 0.0f) {
-						terrainAlphas[i][j] = 0.0f;
-					}
-
-				}
+			if (Pdist < terrainEditRadius && paintType != terrainTexturesHolder[i][j]) {
+				terrainTexturesHolder[i][j] = paintType;
 
 
 			}
@@ -374,10 +360,9 @@ void DisplayChunk::paintGround(float dt, int paintType) {
 
 
 
-void DisplayChunk::LoadHeightMap(std::shared_ptr<DX::DeviceResources>  DevResources, int textureType)
+void DisplayChunk::LoadHeightMap(std::shared_ptr<DX::DeviceResources>  DevResources)
 {
 
-	myTextureType = textureType;
 	auto device = DevResources->GetD3DDevice();
 	auto devicecontext = DevResources->GetD3DDeviceContext();
 
@@ -408,22 +393,31 @@ void DisplayChunk::LoadHeightMap(std::shared_ptr<DX::DeviceResources>  DevResour
 
 	std::wstring texturewstr;
 
-	switch (textureType) {
-	case 0:
-		texturewstr = StringToWCHART(m_tex_diffuse_path);
-		break;
-	case 1:
-		texturewstr = StringToWCHART("database/data/wowCobble.dds");
-		break;
-	default:
-		texturewstr = StringToWCHART(m_tex_diffuse_path);
-		break;
-	}
 
-
-	HRESULT rs;	
-	rs = CreateDDSTextureFromFile(device, texturewstr.c_str(), NULL, &m_texture_diffuse);	//load tex into Shader resource	view and resource
+	for (int i = 0; i < 2; i++) {
+		switch (i) {
+		case 0:
+			texturewstr = StringToWCHART(m_tex_diffuse_path);
+			break;
+		case 1:
+			texturewstr = StringToWCHART("database/data/wowCobble.dds");
+			break;
+		default:
+			texturewstr = StringToWCHART(m_tex_diffuse_path);
+			break;
+		}
 	
+	
+
+		HRESULT rs;
+		ID3D11ShaderResourceView* ref_SRV;
+		m_texture_diffuse.push_back(ref_SRV);
+		rs = CreateDDSTextureFromFile(device, texturewstr.c_str(), NULL, &m_texture_diffuse.back());	//load tex into Shader resource	view and resource
+
+
+	}
+	
+
 
 	//std::wstring texturewstr2 = StringToWCHART("database/data/wowCobble.dds");
 	//HRESULT rs2;
@@ -436,7 +430,7 @@ void DisplayChunk::LoadHeightMap(std::shared_ptr<DX::DeviceResources>  DevResour
 	m_terrainEffect->EnableDefaultLighting();
 	m_terrainEffect->SetLightingEnabled(true);
 	m_terrainEffect->SetTextureEnabled(true);
-	m_terrainEffect->SetTexture(m_texture_diffuse);
+	m_terrainEffect->SetTexture(m_texture_diffuse.back());
 
 	void const* shaderByteCode;
 	size_t byteCodeLength;

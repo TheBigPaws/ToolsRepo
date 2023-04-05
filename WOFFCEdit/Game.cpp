@@ -122,8 +122,6 @@ void Game::handleInput(float dt) {
 		
 		m_displayChunk.selectVertex(Camera_.m_camPosition, getClickingVector());
 
-		m_displayChunk_Two.isIntersecting = m_displayChunk.isIntersecting;
-		m_displayChunk_Two.planeIntersectPoint = m_displayChunk.planeIntersectPoint;
 
 	}
 
@@ -154,7 +152,6 @@ void Game::handleInput(float dt) {
 	}
 
 
-	bool moveV = false;
 
 
 	if (m_InputCommands.LMBdown)
@@ -168,19 +165,15 @@ void Game::handleInput(float dt) {
 
 		case RAISE:
 			m_displayChunk.raiseGround(dt);
-			moveV = true;
 			break;
 		
 		case LOWER:
 			//m_displayChunk.selectVertex(Camera_.m_camPosition, getClickingVector());
 			//m_displayChunk.lowerGround(dt);
-			moveV = true;
 			m_displayChunk.paintGround(dt, 1);
-			m_displayChunk_Two.paintGround(dt, 1);
 			break;
 		
 		case FLATTEN:
-			moveV = true;
 			//m_displayChunk.selectVertex(Camera_.m_camPosition, getClickingVector());
 			m_displayChunk.levelGround(dt);
 			break;
@@ -191,15 +184,6 @@ void Game::handleInput(float dt) {
 		
 	}
 
-	if (moveV) {
-		for (size_t i = 0; i < TERRAINRESOLUTION; i++)
-		{
-			for (size_t j = 0; j < TERRAINRESOLUTION; j++)
-			{
-				m_displayChunk_Two.setYatIDX(i, j, m_displayChunk.getYatIDX(i, j) - 0.1f);
-			}
-		}
-	}
 
 	Camera_.UpdateCameraPosition(dForward, dRight);
 
@@ -231,8 +215,6 @@ void Game::Update(DX::StepTimer const& timer)
 	m_displayChunk.m_terrainEffect->SetView(m_view);
 	m_displayChunk.m_terrainEffect->SetWorld(Matrix::Identity);
 
-	m_displayChunk_Two.m_terrainEffect->SetView(m_view);
-	m_displayChunk_Two.m_terrainEffect->SetWorld(Matrix::Identity);
 
 #ifdef DXTK_AUDIO
     m_audioTimerAcc -= (float)timer.GetElapsedSeconds();
@@ -425,7 +407,6 @@ void Game::Render()
 	}
 
 	//Render the batch,  This is handled in the Display chunk becuase it has the potential to get complex
-	m_displayChunk_Two.RenderBatch(m_deviceResources);
 	m_displayChunk.RenderBatch(m_deviceResources);
 
     m_deviceResources->Present();
@@ -658,19 +639,12 @@ void Game::BuildDisplayChunk(ChunkObject * SceneChunk)
 	m_displayChunk.m_terrainEffect->SetProjection(m_projection);
 	m_displayChunk.InitialiseBatch();
 
-	//populate our local DISPLAYCHUNK with all the chunk info we need from the object stored in toolmain
-	//which, to be honest, is almost all of it. Its mostly rendering related info so...
-	m_displayChunk_Two.PopulateChunkData(SceneChunk);		//migrate chunk data
-	m_displayChunk_Two.LoadHeightMap(m_deviceResources,1);
-	m_displayChunk_Two.m_terrainEffect->SetProjection(m_projection);
-	m_displayChunk_Two.InitialiseBatch(-0.1f,0.0f);
 
 }
 
 void Game::SaveDisplayChunk(ChunkObject * SceneChunk)
 {
 	m_displayChunk.SaveHeightMap();			//save heightmap to file.
-	m_displayChunk_Two.SaveHeightMap();			//save heightmap to file.
 }
 
 #ifdef DXTK_AUDIO

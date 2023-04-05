@@ -18,15 +18,15 @@ public:
 	~DisplayChunk();
 	void PopulateChunkData(ChunkObject * SceneChunk);
 	void RenderBatch(std::shared_ptr<DX::DeviceResources>  DevResources);
-	void InitialiseBatch(float offsetY = 0.0f, float initialAlpha = 1.0f);	//initial setup, base coordinates etc based on scale
-	void LoadHeightMap(std::shared_ptr<DX::DeviceResources>  DevResources, int textureType = 0);
+	void InitialiseBatch();	//initial setup, base coordinates etc based on scale
+	void LoadHeightMap(std::shared_ptr<DX::DeviceResources>  DevResources);
 	void SaveHeightMap();			//saves the heigtmap back to file.
 	void UpdateTerrain();			//updates the geometry based on the heigtmap
 	void GenerateHeightmap();		//creates or alters the heightmap
 	std::unique_ptr<DirectX::PrimitiveBatch<DirectX::VertexPositionNormalTexture>>  m_batch;
 	std::unique_ptr<DirectX::BasicEffect>       m_terrainEffect;
 
-	ID3D11ShaderResourceView *					m_texture_diffuse;				//diffuse texture
+	std::vector<ID3D11ShaderResourceView *>					m_texture_diffuse;				//diffuse texture
 	Microsoft::WRL::ComPtr<ID3D11InputLayout>   m_terrainInputLayout;
 
 
@@ -34,7 +34,7 @@ public:
 	void lowerGround(float dt);
 	void levelGround(float dt);
 	void paintGround(float dt, int paintType);
-	int myTextureType;
+	//int myTextureType;
 
 	float getYatPos(Vector3 pos_);
 
@@ -64,7 +64,7 @@ public:
 private:
 	
 	DirectX::VertexPositionNormalTexture m_terrainGeometry[TERRAINRESOLUTION][TERRAINRESOLUTION];
-	float terrainAlphas[TERRAINRESOLUTION][TERRAINRESOLUTION];
+	int terrainTexturesHolder[TERRAINRESOLUTION][TERRAINRESOLUTION];
 	BYTE m_heightMap[TERRAINRESOLUTION*TERRAINRESOLUTION];
 	void CalculateTerrainNormals();
 
