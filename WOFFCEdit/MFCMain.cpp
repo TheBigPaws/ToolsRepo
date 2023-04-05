@@ -15,6 +15,7 @@ BEGIN_MESSAGE_MAP(MFCMain, CWinApp)
 	ON_COMMAND(ID_BUTTON40019,	&MFCMain::ToolBarButtonCursor)
 	ON_COMMAND(ID_BUTTON40020,	&MFCMain::ToolBarButtonGrid)
 	ON_COMMAND(ID_BUTTON40023,	&MFCMain::ToolBarButtonWireframe)
+	ON_COMMAND(ID_BUTTON40025,	&MFCMain::ToolBarButtonPaint)
 	ON_UPDATE_COMMAND_UI(ID_INDICATOR_TOOL, &CMyFrame::OnUpdatePage)
 END_MESSAGE_MAP()
 
@@ -153,6 +154,8 @@ void MFCMain::ToolBarButtonLower() {
 
 
 }
+
+
 void MFCMain::ToolBarButtonFlatten() {
 
 	m_ToolSystem.getGame()->setTerrainEditType(FLATTEN);
@@ -160,6 +163,15 @@ void MFCMain::ToolBarButtonFlatten() {
 
 
 }
+
+void MFCMain::ToolBarButtonPaint() {
+
+	m_ToolSystem.getGame()->setTerrainEditType(PAINT);
+
+
+
+}
+
 
 void MFCMain::ToolBarButtonCursor() {
 	m_ToolSystem.getGame()->setTerrainEditType(NOTHING);

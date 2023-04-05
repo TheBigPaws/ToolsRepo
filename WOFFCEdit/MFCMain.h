@@ -44,6 +44,7 @@ private:
 	afx_msg	void ToolBarButtonLower();
 	afx_msg	void ToolBarButtonFlatten();
 
+	afx_msg	void ToolBarButtonPaint();
 
 	DECLARE_MESSAGE_MAP()	// required macro for message map functionality  One per class
 };

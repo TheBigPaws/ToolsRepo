@@ -169,7 +169,11 @@ void Game::handleInput(float dt) {
 		
 		case LOWER:
 			//m_displayChunk.selectVertex(Camera_.m_camPosition, getClickingVector());
-			//m_displayChunk.lowerGround(dt);
+			m_displayChunk.lowerGround(dt);
+			break;
+
+		case PAINT:
+			//m_displayChunk.selectVertex(Camera_.m_camPosition, getClickingVector());
 			m_displayChunk.paintGround(dt, 1);
 			break;
 		

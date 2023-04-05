@@ -14,6 +14,11 @@ DisplayChunk::DisplayChunk()
 	m_textureCoordStep = 1.0 / (TERRAINRESOLUTION-1);	//-1 becuase its split into chunks. not vertices.  we want tthe last one in each row to have tex coord 1
 	m_terrainPositionScalingFactor = m_terrainSize / (TERRAINRESOLUTION-1);
 
+
+	for (int i = 0; i < 2 * TERRAINRESOLUTION * TERRAINRESOLUTION; i++) {
+		terrainTexturesHolder_IDCS[i] = 0;
+	}
+
 }
 
 
@@ -52,7 +57,7 @@ void DisplayChunk::RenderBatch(std::shared_ptr<DX::DeviceResources>  DevResource
 
 	auto context = DevResources->GetD3DDeviceContext();
 	context->IASetInputLayout(m_terrainInputLayout.Get());
-	float lastTXT = terrainTexturesHolder[0][0];
+	float lastTXT = terrainTexturesHolder_IDCS[0];
 	m_terrainEffect->SetTexture(m_texture_diffuse[lastTXT]);
 	m_terrainEffect->Apply(context);
 
@@ -68,35 +73,26 @@ void DisplayChunk::RenderBatch(std::shared_ptr<DX::DeviceResources>  DevResource
 		{
 
 			//bool changeBatches = false;
+			index_ = 2 * ((TERRAINRESOLUTION * i) + j);
 
-			if (terrainTexturesHolder[i][j] != lastTXT) {
+			//m_batch->DrawQuad(m_terrainGeometry[i][j], m_terrainGeometry[i][j + 1], m_terrainGeometry[i + 1][j + 1], m_terrainGeometry[i + 1][j]); //bottom left bottom right, top right top left.
+
+			if (terrainTexturesHolder_IDCS[index_] != lastTXT) {
 				m_batch->End();
+				lastTXT = terrainTexturesHolder_IDCS[index_];
 				m_terrainEffect->SetTexture(m_texture_diffuse[lastTXT]);
 				m_terrainEffect->Apply(context);
-				lastTXT = terrainTexturesHolder[i][j];
 				m_batch->Begin();
 			}
-			m_batch->DrawQuad(m_terrainGeometry[i][j], m_terrainGeometry[i][j + 1], m_terrainGeometry[i + 1][j + 1], m_terrainGeometry[i + 1][j]); //bottom left bottom right, top right top left.
-
-
-				//m_batch->End();
-				//m_terrainEffect->SetAlpha(20.0f);
-				//m_terrainEffect->Apply(context);
-				//m_batch->Begin();
-				//m_batch->DrawTriangle(m_terrainGeometry[i][j], m_terrainGeometry[i + 1][j], m_terrainGeometry[i + 1][j + 1]); //bottom left bottom right, top right top left.
-				//
-				//
-				//m_batch->End();
-				//m_terrainEffect->SetAlpha(1.0);
-				//m_terrainEffect->Apply(context);
-				//m_batch->Begin();
-				//
-				//m_batch->DrawTriangle(m_terrainGeometry[i][j], m_terrainGeometry[i][j + 1], m_terrainGeometry[i + 1][j + 1]); //bottom left bottom right, top right top left.
-
-
-			
-			//m_batch->DrawTriangle(m_terrainGeometry[i][j], m_terrainGeometry[i][j + 1], m_terrainGeometry[i + 1][j + 1]); //bottom left bottom right, top right top left.
-			//m_batch->DrawTriangle(m_terrainGeometry[i][j], m_terrainGeometry[i + 1][j], m_terrainGeometry[i + 1][j + 1]); //bottom left bottom right, top right top left.
+			m_batch->DrawTriangle(m_terrainGeometry[i][j], m_terrainGeometry[i][j + 1], m_terrainGeometry[i + 1][j + 1]); //bottom left bottom right, top right top left.
+			if (terrainTexturesHolder_IDCS[index_ + 1] != lastTXT) {
+				m_batch->End();
+				lastTXT = terrainTexturesHolder_IDCS[index_ + 1];
+				m_terrainEffect->SetTexture(m_texture_diffuse[lastTXT]);
+				m_terrainEffect->Apply(context);
+				m_batch->Begin();
+			}
+			m_batch->DrawTriangle(m_terrainGeometry[i][j], m_terrainGeometry[i + 1][j], m_terrainGeometry[i + 1][j + 1]); //bottom left bottom right, top right top left.
 
 		}
 
@@ -206,7 +202,6 @@ void DisplayChunk::selectVertex(DirectX::SimpleMath::Vector3 camPos, DirectX::Si
 		nowV = camPos + forwardMoveIt * camLookDir;
 
 		Vector2 idxs_ = getIndicesOfTriangleUnderPos(nowV);
-		int index_ = 2 * ((TERRAINRESOLUTION * idxs_.x) + idxs_.y);
 		Vector3 outPos;
 
 		if (RayIntersectsTriangle(camPos, camLookDir, m_terrainGeometry[int(idxs_.x)][int(idxs_.y)].position, m_terrainGeometry[int(idxs_.x + 1)][int(idxs_.y)].position, m_terrainGeometry[int(idxs_.x + 1)][int(idxs_.y + 1)].position, outPos)) {
@@ -338,22 +333,29 @@ void DisplayChunk::paintGround(float dt, int paintType) {
 		{
 
 			//Vector2 triaIndices
+			int index_ = 2 * ((TERRAINRESOLUTION * i) + j);
 
-			Vector3 avgPos = m_terrainGeometry[i][j].position + m_terrainGeometry[i+1][j].position + m_terrainGeometry[i][j+1].position + m_terrainGeometry[i+1][j+1].position;
-			avgPos /= 4;
+
+			Vector3 avgPos_ONE = m_terrainGeometry[i][j].position + m_terrainGeometry[i][j + 1].position + m_terrainGeometry[i+1][j+1].position;
+			avgPos_ONE /= 3;
 			
-			DirectX::SimpleMath::Vector3 distanceVector = planeIntersectPoint - avgPos;
-			//distanceVector.y = 0;
+			Vector3 avgPos_TWO = m_terrainGeometry[i][j].position +  m_terrainGeometry[i + 1][j].position + m_terrainGeometry[i + 1][j + 1].position;
+			avgPos_TWO /= 3;
 
+
+			DirectX::SimpleMath::Vector3 distanceVector = planeIntersectPoint - avgPos_ONE;
+			DirectX::SimpleMath::Vector3 distanceVector_TWO = planeIntersectPoint - avgPos_TWO;
 			float Pdist = distanceVector.Length();
+			float Pdist_TWO = distanceVector_TWO.Length();
 
 
-			if (Pdist < terrainEditRadius && paintType != terrainTexturesHolder[i][j]) {
-				terrainTexturesHolder[i][j] = paintType;
 
-
+			if (Pdist < terrainEditRadius && paintType != terrainTexturesHolder_IDCS[index_]) {
+				terrainTexturesHolder_IDCS[index_] = paintType;
 			}
-
+			if (Pdist_TWO < terrainEditRadius && paintType != terrainTexturesHolder_IDCS[index_ + 1]) {
+				terrainTexturesHolder_IDCS[index_ + 1] = paintType;
+			}
 		}
 	}
 }

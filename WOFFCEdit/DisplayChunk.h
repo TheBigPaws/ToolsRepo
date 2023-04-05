@@ -6,7 +6,7 @@
 //geometric resoltuion - note,  hard coded.
 #define TERRAINRESOLUTION 128
 
-enum TerrainEditType{ RAISE,LOWER,FLATTEN,NOTHING};
+enum TerrainEditType{ RAISE,LOWER,FLATTEN,NOTHING, PAINT};
 
 
 using namespace DirectX::SimpleMath;
@@ -65,6 +65,7 @@ private:
 	
 	DirectX::VertexPositionNormalTexture m_terrainGeometry[TERRAINRESOLUTION][TERRAINRESOLUTION];
 	int terrainTexturesHolder[TERRAINRESOLUTION][TERRAINRESOLUTION];
+	int terrainTexturesHolder_IDCS[2 * TERRAINRESOLUTION * TERRAINRESOLUTION];
 	BYTE m_heightMap[TERRAINRESOLUTION*TERRAINRESOLUTION];
 	void CalculateTerrainNormals();
 
