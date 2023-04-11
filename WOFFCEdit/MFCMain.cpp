@@ -8,6 +8,7 @@ BEGIN_MESSAGE_MAP(MFCMain, CWinApp)
 	ON_COMMAND(ID_FILE_QUIT,	&MFCMain::MenuFileQuit)
 	ON_COMMAND(ID_FILE_SAVETERRAIN, &MFCMain::MenuFileSaveTerrain)
 	ON_COMMAND(ID_EDIT_SELECT, &MFCMain::MenuEditSelect)
+	ON_COMMAND(ID_EDIT_CHANGEBRUSHSIZE, &MFCMain::MenuEditSetBrushSize)
 	ON_COMMAND(ID_BUTTON40001,	&MFCMain::ToolBarButtonSave)
 	ON_COMMAND(ID_BUTTON40012,	&MFCMain::ToolBarButtonRaise)
 	ON_COMMAND(ID_BUTTON40010,	&MFCMain::ToolBarButtonLower)
@@ -123,6 +124,14 @@ void MFCMain::MenuEditSelect()
 	m_ToolSelectDialogue.Create(IDD_DIALOG1);	//Start up modeless
 	m_ToolSelectDialogue.ShowWindow(SW_SHOW);	//show modeless
 	m_ToolSelectDialogue.SetObjectData(&m_ToolSystem.m_sceneGraph, &m_ToolSystem.m_selectedObject);
+}
+
+void MFCMain::MenuEditSetBrushSize()
+{
+	//modeless dialogue must be declared in the class.   If we do local it will go out of scope instantly and destroy itself
+	m_ToolBSDialogue.Create(IDD_DIALOG2);	//Start up modeless
+	m_ToolBSDialogue.ShowWindow(SW_SHOW);	//show modeless
+	//m_ToolBSDialogue.SetObjectData(&m_ToolSystem.m_sceneGraph, &m_ToolSystem.m_selectedObject);
 }
 
 void MFCMain::ToolBarButtonSave()

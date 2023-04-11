@@ -165,6 +165,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="BrushSizeDia.cpp" />
     <ClCompile Include="CameraMain.cpp" />
     <ClCompile Include="ChunkObject.cpp" />
     <ClCompile Include="DeviceResources.cpp" />
@@ -182,6 +183,7 @@
     <ClCompile Include="ToolMain.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="BrushSizeDia.h" />
     <ClInclude Include="CameraMain.h" />
     <ClInclude Include="ChunkObject.h" />
     <ClInclude Include="DeviceResources.h" />

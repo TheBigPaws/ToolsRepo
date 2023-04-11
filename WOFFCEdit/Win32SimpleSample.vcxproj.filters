@@ -62,6 +62,7 @@
     <ClCompile Include="CameraMain.cpp">
       <Filter>Renderer</Filter>
     </ClCompile>
+    <ClCompile Include="BrushSizeDia.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="DeviceResources.h">
@@ -114,6 +115,7 @@
     <ClInclude Include="CameraMain.h">
       <Filter>Renderer</Filter>
     </ClInclude>
+    <ClInclude Include="BrushSizeDia.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
