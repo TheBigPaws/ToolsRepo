@@ -52,6 +52,7 @@ void SelectDialogue::DoDataExchange(CDataExchange* pDX)
 {
 	CDialogEx::DoDataExchange(pDX);
 	DDX_Control(pDX, IDC_LIST1, m_listBox);
+	//DDX_Control()
 }
 
 void SelectDialogue::End()

@@ -68,6 +68,9 @@ public:
 	void setTerrainEditType(TerrainEditType setTo);
 	TerrainEditType getTerrainEditType();
 
+	float * getBrushFloat(){
+		return &(m_displayChunk.terrainEditRadius);
+	}
 
 	float timeIt = 0.0f;
 #ifdef DXTK_AUDIO

@@ -131,7 +131,7 @@ void MFCMain::MenuEditSetBrushSize()
 	//modeless dialogue must be declared in the class.   If we do local it will go out of scope instantly and destroy itself
 	m_ToolBSDialogue.Create(IDD_DIALOG2);	//Start up modeless
 	m_ToolBSDialogue.ShowWindow(SW_SHOW);	//show modeless
-	//m_ToolBSDialogue.SetObjectData(&m_ToolSystem.m_sceneGraph, &m_ToolSystem.m_selectedObject);
+	m_ToolBSDialogue.brushSize = m_ToolSystem.getGame()->getBrushFloat();
 }
 
 void MFCMain::ToolBarButtonSave()
