@@ -396,13 +396,27 @@ void DisplayChunk::LoadHeightMap(std::shared_ptr<DX::DeviceResources>  DevResour
 	std::wstring texturewstr;
 
 
-	for (int i = 0; i < 2; i++) {
+	//link for cobble
+	//https://www.artstation.com/artwork/1GA8K
+
+	//link for grass
+	//https://www.pinterest.com/wiredfarm/grass/
+
+	//link for trash
+	//https://www.pinterest.cl/pin/290482244715194117/
+	for (int i = 0; i < 4; i++) {
 		switch (i) {
 		case 0:
 			texturewstr = StringToWCHART(m_tex_diffuse_path);
 			break;
 		case 1:
 			texturewstr = StringToWCHART("database/data/wowCobble.dds");
+			break;
+		case 2:
+			texturewstr = StringToWCHART("database/data/GrassTXT.dds");
+			break;
+		case 3:
+			texturewstr = StringToWCHART("database/data/TrashTXT.dds");
 			break;
 		default:
 			texturewstr = StringToWCHART(m_tex_diffuse_path);

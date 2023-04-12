@@ -175,6 +175,7 @@
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="MFCFrame.cpp" />
     <ClCompile Include="MFCRenderFrame.cpp" />
+    <ClCompile Include="PaintSelectDialogue.cpp" />
     <ClCompile Include="pch.cpp" />
     <ClCompile Include="MFCMain.cpp" />
     <ClCompile Include="SceneObject.cpp" />
@@ -193,6 +194,7 @@
     <ClInclude Include="InputCommands.h" />
     <ClInclude Include="MFCFrame.h" />
     <ClInclude Include="MFCRenderFrame.h" />
+    <ClInclude Include="PaintSelectDialogue.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="SceneObject.h" />
@@ -214,6 +216,12 @@
     <ResourceCompile Include="Win32SimpleSample.rc" />
   </ItemGroup>
   <ItemGroup>
+    <Image Include="bitmap1.bmp" />
+    <Image Include="database\data\bitmap3.bmp" />
+    <Image Include="database\data\GrassTXT.bmp" />
+    <Image Include="database\data\rock.bmp" />
+    <Image Include="database\data\TrashTXT.bmp" />
+    <Image Include="database\data\wowcobble.bmp" />
     <Image Include="toolbar1.bmp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

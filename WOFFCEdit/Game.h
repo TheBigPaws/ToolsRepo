@@ -73,6 +73,8 @@ public:
 	}
 
 	float timeIt = 0.0f;
+
+	int paintType = 1;
 #ifdef DXTK_AUDIO
 	void NewAudioDevice();
 #endif

@@ -10,7 +10,7 @@
 #include "MFCFrame.h"
 #include "SelectDialogue.h"
 #include "BrushSizeDia.h"
-
+#include "PaintSelectDialogue.h"
 
 class MFCMain : public CWinApp 
 {
@@ -28,6 +28,7 @@ private:
 	CRect WindowRECT;	//Window area rectangle. 
 	SelectDialogue m_ToolSelectDialogue;			//for modeless dialogue, declare it here
 	BrushSizeDia m_ToolBSDialogue;			//for modeless dialogue, declare it here
+	PaintSelectDialogue m_paintSelDialogue;			//for modeless dialogue, declare it here
 
 	int m_width;		
 	int m_height;

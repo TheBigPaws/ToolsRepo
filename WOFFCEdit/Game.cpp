@@ -174,7 +174,7 @@ void Game::handleInput(float dt) {
 
 		case PAINT:
 			//m_displayChunk.selectVertex(Camera_.m_camPosition, getClickingVector());
-			m_displayChunk.paintGround(dt, 1);
+			m_displayChunk.paintGround(dt, paintType);
 			break;
 		
 		case FLATTEN:
@@ -809,12 +809,7 @@ DirectX::SimpleMath::Vector3 Game::getClickingVector() {
 }
 
 void Game::setTerrainEditType(TerrainEditType setTo) {
-	if (m_displayChunk.currentEditType == setTo) {
-		m_displayChunk.currentEditType = TerrainEditType::NOTHING;
-	}
-	else {
-		m_displayChunk.currentEditType = setTo;
-	}
+	m_displayChunk.currentEditType = setTo;
 }
 
 

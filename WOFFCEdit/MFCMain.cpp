@@ -177,8 +177,12 @@ void MFCMain::ToolBarButtonPaint() {
 
 	m_ToolSystem.getGame()->setTerrainEditType(PAINT);
 
+	//modeless dialogue must be declared in the class.   If we do local it will go out of scope instantly and destroy itself
+	m_paintSelDialogue.Create(IDD_DIALOG3);	//Start up modeless
+	m_paintSelDialogue.ShowWindow(SW_SHOW);	//show modeless
+	//m_ToolBSDialogue.brushSize = m_ToolSystem.getGame()->getBrushFloat();
 
-
+	m_paintSelDialogue.paintType = &m_ToolSystem.getGame()->paintType;
 }
 
 

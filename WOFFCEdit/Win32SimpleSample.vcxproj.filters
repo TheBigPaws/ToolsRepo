@@ -62,7 +62,12 @@
     <ClCompile Include="CameraMain.cpp">
       <Filter>Renderer</Filter>
     </ClCompile>
-    <ClCompile Include="BrushSizeDia.cpp" />
+    <ClCompile Include="PaintSelectDialogue.cpp">
+      <Filter>MFC</Filter>
+    </ClCompile>
+    <ClCompile Include="BrushSizeDia.cpp">
+      <Filter>MFC</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="DeviceResources.h">
@@ -115,7 +120,12 @@
     <ClInclude Include="CameraMain.h">
       <Filter>Renderer</Filter>
     </ClInclude>
-    <ClInclude Include="BrushSizeDia.h" />
+    <ClInclude Include="PaintSelectDialogue.h">
+      <Filter>MFC</Filter>
+    </ClInclude>
+    <ClInclude Include="BrushSizeDia.h">
+      <Filter>MFC</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
@@ -127,6 +137,24 @@
   </ItemGroup>
   <ItemGroup>
     <Image Include="toolbar1.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="database\data\rock.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="database\data\wowcobble.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="bitmap1.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="database\data\GrassTXT.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="database\data\bitmap3.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="database\data\TrashTXT.bmp">
       <Filter>Resource Files</Filter>
     </Image>
   </ItemGroup>
