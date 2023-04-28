@@ -118,7 +118,8 @@ void Game::Tick(InputCommands *Input)
 
 void Game::handleInput(float dt) {
 
-	if (m_displayChunk.currentEditType != NOTHING){
+	//added true cause
+	if (m_displayChunk.currentEditType != NOTHING || true){
 		
 		m_displayChunk.selectVertex(Camera_.m_camPosition, getClickingVector());
 
@@ -150,7 +151,12 @@ void Game::handleInput(float dt) {
 		Camera_.UpdateCameraRotation(m_InputCommands.rotate[0], m_InputCommands.rotate[1], dt);
 
 	}
+	if (m_InputCommands.moveObject)
+	{
 
+		//Camera_.UpdateCameraRotation(m_InputCommands.rotate[0], m_InputCommands.rotate[1], dt);
+
+	}
 
 
 
@@ -158,9 +164,11 @@ void Game::handleInput(float dt) {
 	{
 		switch (m_displayChunk.currentEditType) {
 		case NOTHING:
-			//selecting objects
-			//toolRef->m_selectedObject = MousePicking();
-			//toolRef->getInputsRef()->LMBdown = false;
+			if (!alreadyPicked) {
+				*selectedIDobject = MousePicking();
+				alreadyPicked = true;
+			}
+			
 			break;
 
 		case RAISE:
@@ -187,7 +195,7 @@ void Game::handleInput(float dt) {
 		}
 		
 	}
-
+	else {alreadyPicked = false;}
 
 	Camera_.UpdateCameraPosition(dForward, dRight);
 
@@ -382,7 +390,7 @@ void Game::Render()
 				if (fog)
 				{
 
-					if (selectedIDobject == i) {
+					if (*selectedIDobject == i) {
 						fog->SetFogEnabled(true);
 					}
 					else {
@@ -868,7 +876,6 @@ int Game::MousePicking() {
 		}
 	}
 
-	selectedIDobject = selectedID;
 
 	//if we got a hit.  return it.  
 	return selectedID;

@@ -57,7 +57,7 @@ void ToolMain::onActionInitialise(HWND handle, int width, int height)
 	
 	m_d3dRenderer.Initialize(handle, m_width, m_height);
 
-
+	m_d3dRenderer.selectedIDobject = &m_selectedObject;
 	//database connection establish
 	int rc;
 	rc = sqlite3_open_v2("database/test.db",&m_databaseConnection, SQLITE_OPEN_READWRITE, NULL);
@@ -307,13 +307,6 @@ void ToolMain::Tick(MSG* msg)
 	//Renderer Update Call
 	m_d3dRenderer.Tick(&m_toolInputCommands);
 
-
-	if (m_toolInputCommands.LMBdown && m_d3dRenderer.getTerrainEditType() == NOTHING)
-	{
-		m_selectedObject = m_d3dRenderer.MousePicking();
-		m_toolInputCommands.LMBdown = false;
-	}
-
 }
 
 void ToolMain::UpdateInput(MSG* msg)
@@ -432,6 +425,10 @@ void ToolMain::UpdateInput(MSG* msg)
 		m_toolInputCommands.right = true;
 	}
 	else m_toolInputCommands.right = false;
-
+	if (m_keyArray['P'])
+	{
+		m_toolInputCommands.moveObject = true;
+	}
+	else m_toolInputCommands.moveObject = false;
 
 }

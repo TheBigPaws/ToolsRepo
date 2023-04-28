@@ -62,9 +62,9 @@ public:
 	int MousePicking();
 	DirectX::SimpleMath::Vector3 getClickingVector();
 
-	int selectedIDobject = 0;
+	int  * selectedIDobject;
 	bool renderInWireframe = false;
-
+	bool alreadyPicked = false;
 	void setTerrainEditType(TerrainEditType setTo);
 	TerrainEditType getTerrainEditType();
 

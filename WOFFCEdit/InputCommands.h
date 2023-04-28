@@ -9,6 +9,8 @@ struct InputCommands
 
 	int rotate[2];
 	
+	bool moveObject;
+
 	int MouseXY[2];
 
 	bool RMBdown;
