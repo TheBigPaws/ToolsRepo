@@ -59,6 +59,8 @@ public:
 
 	void handleInput(float dt);
 
+	void drawNormals();
+
 	int MousePicking();
 	DirectX::SimpleMath::Vector3 getClickingVector();
 
@@ -73,6 +75,7 @@ public:
 	}
 
 	float timeIt = 0.0f;
+	bool shouldShowNormals = true;
 
 	int paintType = 1;
 #ifdef DXTK_AUDIO

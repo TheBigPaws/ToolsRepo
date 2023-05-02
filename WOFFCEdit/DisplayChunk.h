@@ -1,6 +1,7 @@
 #pragma once
 #include "pch.h"
 #include "DeviceResources.h"
+#include <SimpleMath.h>
 #include "ChunkObject.h"
 
 //geometric resoltuion - note,  hard coded.
@@ -35,12 +36,12 @@ public:
 	void levelGround(float dt);
 	void paintGround(float dt, int paintType);
 	//int myTextureType;
-
 	float getYatPos(Vector3 pos_);
 
-	void selectVertex(Vector3 camPos, Vector3 camLookDir);
+	void mouseIntersect(Vector3 camPos, Vector3 mouseVector);
 	bool RayIntersectsTriangle(Vector3 rayOrigin, Vector3 rayVector, Vector3 v1_t, Vector3 v2_t, Vector3 v3_t, Vector3& outIntersectionPoint); // <- https://en.wikipedia.org/wiki/M%C3%B6ller%E2%80%93Trumbore_intersection_algorithm
 	Vector3 planeIntersectPoint;
+	Vector3 planeIntersectPointNormal;
 	bool isIntersecting = false;
 
 	//int selectedTriaIndex = -1;
@@ -61,9 +62,9 @@ public:
 		return m_terrainGeometry[i][j].position.y;
 	}
 
+	DirectX::VertexPositionNormalTexture m_terrainGeometry[TERRAINRESOLUTION][TERRAINRESOLUTION];
 private:
 	
-	DirectX::VertexPositionNormalTexture m_terrainGeometry[TERRAINRESOLUTION][TERRAINRESOLUTION];
 	int terrainTexturesHolder[TERRAINRESOLUTION][TERRAINRESOLUTION];
 	int terrainTexturesHolder_IDCS[2 * TERRAINRESOLUTION * TERRAINRESOLUTION];
 	BYTE m_heightMap[TERRAINRESOLUTION*TERRAINRESOLUTION];

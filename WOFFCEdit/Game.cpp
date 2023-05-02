@@ -121,7 +121,7 @@ void Game::handleInput(float dt) {
 	//added true cause
 	if (m_displayChunk.currentEditType != NOTHING || true){
 		
-		m_displayChunk.selectVertex(Camera_.m_camPosition, getClickingVector());
+		m_displayChunk.mouseIntersect(Camera_.m_camPosition, getClickingVector());
 
 
 	}
@@ -153,7 +153,12 @@ void Game::handleInput(float dt) {
 	}
 	if (m_InputCommands.moveObject)
 	{
-
+		m_displayList[*selectedIDobject].m_position = m_displayChunk.planeIntersectPoint;
+		
+		XMVECTOR q = XMQuaternionRotationRollPitchYawFromVector(XMLoadFloat3(&m_displayChunk.planeIntersectPointNormal));
+		XMFLOAT4 angles;
+		XMStoreFloat4(&angles, q);
+		m_displayList[*selectedIDobject].m_orientation = Vector3(angles.x, angles.y, angles.z);
 		//Camera_.UpdateCameraRotation(m_InputCommands.rotate[0], m_InputCommands.rotate[1], dt);
 
 	}
@@ -201,6 +206,8 @@ void Game::handleInput(float dt) {
 
 
 }
+
+
 
 // Updates the world.
 void Game::Update(DX::StepTimer const& timer)
@@ -257,7 +264,81 @@ void Game::Update(DX::StepTimer const& timer)
 }
 #pragma endregion
 
+void Game::drawNormals()
+{
 
+
+	auto context = m_deviceResources->GetD3DDeviceContext();
+	m_batchEffect->Apply(context);
+	context->IASetInputLayout(m_batchInputLayout.Get());
+	//render circle 
+	m_batch->Begin();
+
+
+
+	//show normal per triangle 
+	int index1, index2, index3, index4;
+	DirectX::SimpleMath::Vector3 upDownVector, leftRightVector, normalVector;
+
+
+
+	for (int i = 0; i < (TERRAINRESOLUTION - 1); i++)
+	{
+		for (int j = 0; j < (TERRAINRESOLUTION - 1); j++)
+		{
+			upDownVector.x = (m_terrainGeometry[i + 1][j].position.x - m_terrainGeometry[i - 1][j].position.x);
+			upDownVector.y = (m_terrainGeometry[i + 1][j].position.y - m_terrainGeometry[i - 1][j].position.y);
+			upDownVector.z = (m_terrainGeometry[i + 1][j].position.z - m_terrainGeometry[i - 1][j].position.z);
+
+			leftRightVector.x = (m_terrainGeometry[i][j - 1].position.x - m_terrainGeometry[i][j + 1].position.x);
+			leftRightVector.y = (m_terrainGeometry[i][j - 1].position.y - m_terrainGeometry[i][j + 1].position.y);
+			leftRightVector.z = (m_terrainGeometry[i][j - 1].position.z - m_terrainGeometry[i][j + 1].position.z);
+
+
+			leftRightVector.Cross(upDownVector, normalVector);	//get cross product
+			normalVector.Normalize();			//normalise it.
+
+			m_terrainGeometry[i][j].normal = normalVector;	//set the normal for this point based on our result
+		}
+	}
+
+	//show normals as calc by matt
+	if (false) {
+		for (size_t i = 0; i < TERRAINRESOLUTION; i++)
+		{
+			for (size_t j = 0; j < TERRAINRESOLUTION; j++)
+			{
+
+
+				DirectX::XMFLOAT3 ps_ = m_displayChunk.m_terrainGeometry[i][j].position;
+				DirectX::XMFLOAT3 nr_ = m_displayChunk.m_terrainGeometry[i][j].normal;
+
+				XMVECTORF32 v1_pos1_ = { ps_.x,ps_.y,ps_.z };
+				XMVECTORF32 v1_pos2_ = { ps_.x + 3 * nr_.x,ps_.y + 3 * nr_.y,ps_.z + 3 * nr_.z };
+				XMVECTORF32 NormalColor = { nr_.x,nr_.y, nr_.z,1.0f };
+				VertexPositionColor v1_(v1_pos1_, NormalColor);
+				VertexPositionColor v2_(v1_pos2_, NormalColor);
+
+				m_batch->DrawLine(v1_, v2_);
+			}
+		}
+	}
+
+
+	//show triangle normal
+	if (fakse) {
+		Vector3 PIP = m_displayChunk.planeIntersectPoint;
+		Vector3 PIN = m_displayChunk.planeIntersectPointNormal;
+
+		XMVECTORF32 NormalC = { m_displayChunk.planeIntersectPointNormal.x,m_displayChunk.planeIntersectPointNormal.y, m_displayChunk.planeIntersectPointNormal.z,1.0f };
+		VertexPositionColor INL1({ PIP.x,PIP.y,PIP.z }, NormalC);
+		VertexPositionColor INL2({ PIP.x + PIN.x * 3,PIP.y + PIN.y * 3,PIP.z + PIN.z * 3 }, NormalC);
+
+		m_batch->DrawLine(INL1, INL2);
+	}
+	m_batch->End();
+
+}
 
 void Game::drawCircleOnTerrain(float radius) {
 	auto context = m_deviceResources->GetD3DDeviceContext();
@@ -356,6 +437,10 @@ void Game::Render()
 	}
 
 
+	if (shouldShowNormals) {
+		drawNormals();
+	}
+
 	if (m_displayChunk.currentEditType != NOTHING) {
 		drawCircleOnTerrain(m_displayChunk.terrainEditRadius - 0.1f + sin(timeIt * 2.0f) * 0.2f);
 	}
@@ -373,7 +458,12 @@ void Game::Render()
 	{
 		m_deviceResources->PIXBeginEvent(L"Draw model");
 		const XMVECTORF32 scale = { m_displayList[i].m_scale.x, m_displayList[i].m_scale.y, m_displayList[i].m_scale.z };
+		
+		
+
 		const XMVECTORF32 translate = { m_displayList[i].m_position.x, m_displayList[i].m_position.y, m_displayList[i].m_position.z };
+
+		
 
 		//convert degrees into radians for rotation matrix
 		XMVECTOR rotate = Quaternion::CreateFromYawPitchRoll(m_displayList[i].m_orientation.y *3.1415 / 180,
@@ -843,8 +933,8 @@ int Game::MousePicking() {
 		//Get the scale factor and translation of the object
 		const XMVECTORF32 scale = { m_displayList[i].m_scale.x,		m_displayList[i].m_scale.y,		m_displayList[i].m_scale.z };
 		const XMVECTORF32 translate = { m_displayList[i].m_position.x,	m_displayList[i].m_position.y,	m_displayList[i].m_position.z };
-
-		//convert euler angles into a quaternion for the rotation of the object
+		
+		//convert euler angles into a quaternion for the rotation of the objecft
 		XMVECTOR rotate = Quaternion::CreateFromYawPitchRoll(m_displayList[i].m_orientation.y * 3.1415 / 180,
 			m_displayList[i].m_orientation.x * 3.1415 / 180,
 			m_displayList[i].m_orientation.z * 3.1415 / 180);
