@@ -50,6 +50,7 @@ public:
 	void OnWindowSizeChanged(int width, int height);
 
 	void drawCircleOnTerrain(float radius);
+	DirectX::SimpleMath::Vector3 GetRotationFromDirection(DirectX::SimpleMath::Vector3 UpDir);
 
 	//tool specific
 	void BuildDisplayList(std::vector<SceneObject> * SceneGraph); //note vector passed by reference 

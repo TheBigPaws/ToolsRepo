@@ -15,6 +15,23 @@ using namespace DirectX::SimpleMath;
 class DisplayChunk
 {
 public:
+	//------------  Base Variables
+	std::unique_ptr<DirectX::PrimitiveBatch<DirectX::VertexPositionNormalTexture>>  m_batch;
+	std::unique_ptr<DirectX::BasicEffect>       m_terrainEffect;
+	std::vector<ID3D11ShaderResourceView*>					m_texture_diffuse;				//diffuse texture
+	Microsoft::WRL::ComPtr<ID3D11InputLayout>   m_terrainInputLayout;
+
+	//------------  Custom Intersection Variables
+	Vector3 planeIntersectPoint;
+	Vector3 planeIntersectPointNormal;
+	bool isIntersecting = false;
+
+	//------------  Custom Terrain Edit Variables
+	TerrainEditType currentEditType = NOTHING;
+	float terrainEditRadius = 10.0f;
+	float terrainEditSpeed = 10.0f;
+
+	//------------  Base Functions
 	DisplayChunk();
 	~DisplayChunk();
 	void PopulateChunkData(ChunkObject * SceneChunk);
@@ -24,43 +41,20 @@ public:
 	void SaveHeightMap();			//saves the heigtmap back to file.
 	void UpdateTerrain();			//updates the geometry based on the heigtmap
 	void GenerateHeightmap();		//creates or alters the heightmap
-	std::unique_ptr<DirectX::PrimitiveBatch<DirectX::VertexPositionNormalTexture>>  m_batch;
-	std::unique_ptr<DirectX::BasicEffect>       m_terrainEffect;
 
-	std::vector<ID3D11ShaderResourceView *>					m_texture_diffuse;				//diffuse texture
-	Microsoft::WRL::ComPtr<ID3D11InputLayout>   m_terrainInputLayout;
-
-
+	//------------  Custom Editing Functions
 	void raiseGround(float dt);
 	void lowerGround(float dt);
 	void levelGround(float dt);
 	void paintGround(float dt, int paintType);
-	//int myTextureType;
-	float getYatPos(Vector3 pos_);
+	void randomizeGround();
 
+	//------------  Custom Utility Functions
+	Vector2 getIndicesOfTriangleUnderPos(Vector3 pos);
+	//Vector3 getNormalAtPos(Vector3 pos);
+	float getYatPos(Vector3 pos_);
 	void mouseIntersect(Vector3 camPos, Vector3 mouseVector);
 	bool RayIntersectsTriangle(Vector3 rayOrigin, Vector3 rayVector, Vector3 v1_t, Vector3 v2_t, Vector3 v3_t, Vector3& outIntersectionPoint); // <- https://en.wikipedia.org/wiki/M%C3%B6ller%E2%80%93Trumbore_intersection_algorithm
-	Vector3 planeIntersectPoint;
-	Vector3 planeIntersectPointNormal;
-	bool isIntersecting = false;
-
-	//int selectedTriaIndex = -1;
-
-	TerrainEditType currentEditType = NOTHING;
-
-
-	Vector2 getIndicesOfTriangleUnderPos(Vector3 pos);
-
-
-	float terrainEditRadius = 10.0f;
-	float terrainEditSpeed = 10.0f;
-
-	void setYatIDX(int i, int j, float Y) {
-		m_terrainGeometry[i][j].position.y = Y;
-	}
-	float getYatIDX(int i, int j) {
-		return m_terrainGeometry[i][j].position.y;
-	}
 
 	DirectX::VertexPositionNormalTexture m_terrainGeometry[TERRAINRESOLUTION][TERRAINRESOLUTION];
 private:

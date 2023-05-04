@@ -143,7 +143,6 @@ float DisplayChunk::getYatPos(Vector3 pos_) {
 
 	Vector2 indices_ = getIndicesOfTriangleUnderPos(pos_);
 
-	//RayIntersectsTriangle(Vector3(pos_.x,pos_.y + 10,pos_.z),Vector3(0,-1000,0),)
 	Vector3 outPos;
 	if (RayIntersectsTriangle(Vector3(pos_.x, pos_.y + 1000, pos_.z), Vector3(0, -1000, 0), m_terrainGeometry[int(indices_.x)][int(indices_.y)].position, m_terrainGeometry[int(indices_.x) + 1][int(indices_.y)].position, m_terrainGeometry[int(indices_.x) + 1][int(indices_.y) + 1].position, outPos)) {
 
@@ -155,6 +154,7 @@ float DisplayChunk::getYatPos(Vector3 pos_) {
 	}
 	return ret_;
 }
+
 
 void DisplayChunk::mouseIntersect(DirectX::SimpleMath::Vector3 camPos, DirectX::SimpleMath::Vector3 mouseVector) {
 
@@ -203,22 +203,39 @@ void DisplayChunk::mouseIntersect(DirectX::SimpleMath::Vector3 camPos, DirectX::
 		Vector2 idxs_ = getIndicesOfTriangleUnderPos(nowV);
 		Vector3 outPos;
 
-		if (RayIntersectsTriangle(camPos, mouseVector, m_terrainGeometry[int(idxs_.x)][int(idxs_.y)].position, m_terrainGeometry[int(idxs_.x + 1)][int(idxs_.y)].position, m_terrainGeometry[int(idxs_.x + 1)][int(idxs_.y + 1)].position, outPos)) {
+		DirectX::SimpleMath::Vector3 v1, v2, normalV;
+		v1 = m_terrainGeometry[int(idxs_.x + 1)][int(idxs_.y + 1)].position - m_terrainGeometry[int(idxs_.x)][int(idxs_.y)].position;
+		v1.Normalize();
 
-			//closestDistance = (outPos - camPos).Length();
+
+		if (RayIntersectsTriangle(camPos, mouseVector, m_terrainGeometry[int(idxs_.x)][int(idxs_.y)].position, m_terrainGeometry[int(idxs_.x + 1)][int(idxs_.y)].position, m_terrainGeometry[int(idxs_.x + 1)][int(idxs_.y + 1)].position, outPos)) {
+			
+
 			planeIntersectPoint = outPos;
 			isIntersecting = true;
-			//Vector3 myNormal = getTriaNormal(m_terrainGeometry[int(idxs_.x)][int(idxs_.y)].position, m_terrainGeometry[int(idxs_.x + 1)][int(idxs_.y)].position, m_terrainGeometry[int(idxs_.x + 1)][int(idxs_.y + 1)].position);
+
+			v2 = m_terrainGeometry[int(idxs_.x + 1)][int(idxs_.y)].position - m_terrainGeometry[int(idxs_.x)][int(idxs_.y)].position;
+			v2.Normalize();
+			v1.Cross(v2, normalV);
+			normalV.Normalize();
+
+			planeIntersectPointNormal = -1* normalV;
 
 			return;
 
 		}
 		if (RayIntersectsTriangle(camPos, mouseVector, m_terrainGeometry[int(idxs_.x)][int(idxs_.y)].position, m_terrainGeometry[int(idxs_.x)][int(idxs_.y + 1)].position, m_terrainGeometry[int(idxs_.x + 1)][int(idxs_.y + 1)].position, outPos)) {
+			
 
-			//closestDistance = (outPos - camPos).Length();
 			planeIntersectPoint = outPos;
 			isIntersecting = true;
-			//Vector3 myNormal = getTriaNormal(m_terrainGeometry[int(idxs_.x)][int(idxs_.y)].position, m_terrainGeometry[int(idxs_.x)][int(idxs_.y + 1)].position, m_terrainGeometry[int(idxs_.x + 1)][int(idxs_.y + 1)].position);
+
+			v2 = m_terrainGeometry[int(idxs_.x)][int(idxs_.y + 1)].position - m_terrainGeometry[int(idxs_.x)][int(idxs_.y)].position;
+			v2.Normalize();
+			v1.Cross(v2, normalV);
+			normalV.Normalize();
+
+			planeIntersectPointNormal = normalV;
 
 			return;
 		}
@@ -268,7 +285,21 @@ void DisplayChunk::raiseGround(float dt) {
 
 }
 
+void DisplayChunk::randomizeGround() {
 
+	for (size_t i = 0; i < TERRAINRESOLUTION; i++)
+	{
+		for (size_t j = 0; j < TERRAINRESOLUTION; j++)
+		{
+
+			m_terrainGeometry[i][j].position.y -= 0.0;
+
+
+		}
+	}
+
+	CalculateTerrainNormals();
+}
 
 
 void DisplayChunk::lowerGround(float dt) {

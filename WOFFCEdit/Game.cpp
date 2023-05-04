@@ -5,6 +5,7 @@
 #include "pch.h"
 #include "Game.h"
 #include "DisplayObject.h"
+
 #include <string>
 
 
@@ -116,6 +117,29 @@ void Game::Tick(InputCommands *Input)
     Render();
 }
 
+DirectX::SimpleMath::Vector3 Game::GetRotationFromDirection(DirectX::SimpleMath::Vector3 Dir)
+{
+	DirectX::SimpleMath::Vector3 UpVec = Vector3(0.0f, 1.0f, 0.0f);
+
+	Dir.Normalize();
+
+
+	float dotProduct = UpVec.Dot(Dir);
+
+	if (dotProduct >= 1.0f) {
+		return Vector3::Zero;
+	}
+	else if (dotProduct <= -1.0f) {
+		return Vector3(180.0f, 0.0f, 0.0f);
+	}
+	else {
+		float angle = acosf(dotProduct) * 180.0f / DirectX::XM_PI;
+		Vector3 axis = UpVec.Cross(Dir);
+		axis.Normalize();
+		return angle * axis;
+	}
+}
+
 void Game::handleInput(float dt) {
 
 	//added true cause
@@ -153,12 +177,13 @@ void Game::handleInput(float dt) {
 	}
 	if (m_InputCommands.moveObject)
 	{
-		m_displayList[*selectedIDobject].m_position = m_displayChunk.planeIntersectPoint;
-		
-		XMVECTOR q = XMQuaternionRotationRollPitchYawFromVector(XMLoadFloat3(&m_displayChunk.planeIntersectPointNormal));
-		XMFLOAT4 angles;
-		XMStoreFloat4(&angles, q);
-		m_displayList[*selectedIDobject].m_orientation = Vector3(angles.x, angles.y, angles.z);
+		m_displayList[*selectedIDobject].m_position = m_displayChunk.planeIntersectPoint + m_displayChunk.planeIntersectPointNormal * m_displayList[*selectedIDobject].m_scale * 0.52f;
+		//
+		//XMVECTOR q = XMQuaternionRotationRollPitchYawFromVector(XMLoadFloat3(&m_displayChunk.planeIntersectPointNormal));
+		//XMFLOAT4 angles;`
+		//XMStoreFloat4(&angles, q);
+		m_displayList[*selectedIDobject].m_orientation = GetRotationFromDirection(m_displayChunk.planeIntersectPointNormal);
+		//m_displayList[*selectedIDobject].m_orientation = Vector3(90.0f,0.0f,0.0f);
 		//Camera_.UpdateCameraRotation(m_InputCommands.rotate[0], m_InputCommands.rotate[1], dt);
 
 	}
@@ -275,33 +300,6 @@ void Game::drawNormals()
 	m_batch->Begin();
 
 
-
-	//show normal per triangle 
-	int index1, index2, index3, index4;
-	DirectX::SimpleMath::Vector3 upDownVector, leftRightVector, normalVector;
-
-
-
-	for (int i = 0; i < (TERRAINRESOLUTION - 1); i++)
-	{
-		for (int j = 0; j < (TERRAINRESOLUTION - 1); j++)
-		{
-			upDownVector.x = (m_terrainGeometry[i + 1][j].position.x - m_terrainGeometry[i - 1][j].position.x);
-			upDownVector.y = (m_terrainGeometry[i + 1][j].position.y - m_terrainGeometry[i - 1][j].position.y);
-			upDownVector.z = (m_terrainGeometry[i + 1][j].position.z - m_terrainGeometry[i - 1][j].position.z);
-
-			leftRightVector.x = (m_terrainGeometry[i][j - 1].position.x - m_terrainGeometry[i][j + 1].position.x);
-			leftRightVector.y = (m_terrainGeometry[i][j - 1].position.y - m_terrainGeometry[i][j + 1].position.y);
-			leftRightVector.z = (m_terrainGeometry[i][j - 1].position.z - m_terrainGeometry[i][j + 1].position.z);
-
-
-			leftRightVector.Cross(upDownVector, normalVector);	//get cross product
-			normalVector.Normalize();			//normalise it.
-
-			m_terrainGeometry[i][j].normal = normalVector;	//set the normal for this point based on our result
-		}
-	}
-
 	//show normals as calc by matt
 	if (false) {
 		for (size_t i = 0; i < TERRAINRESOLUTION; i++)
@@ -326,13 +324,13 @@ void Game::drawNormals()
 
 
 	//show triangle normal
-	if (fakse) {
+	if (true) {
 		Vector3 PIP = m_displayChunk.planeIntersectPoint;
 		Vector3 PIN = m_displayChunk.planeIntersectPointNormal;
 
 		XMVECTORF32 NormalC = { m_displayChunk.planeIntersectPointNormal.x,m_displayChunk.planeIntersectPointNormal.y, m_displayChunk.planeIntersectPointNormal.z,1.0f };
-		VertexPositionColor INL1({ PIP.x,PIP.y,PIP.z }, NormalC);
-		VertexPositionColor INL2({ PIP.x + PIN.x * 3,PIP.y + PIN.y * 3,PIP.z + PIN.z * 3 }, NormalC);
+		VertexPositionColor INL1(XMVECTORF32{ PIP.x,PIP.y,PIP.z }, NormalC);
+		VertexPositionColor INL2(XMVECTORF32{ PIP.x + PIN.x * 3,PIP.y + PIN.y * 3,PIP.z + PIN.z * 3 }, NormalC);
 
 		m_batch->DrawLine(INL1, INL2);
 	}
