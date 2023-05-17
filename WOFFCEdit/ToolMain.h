@@ -59,7 +59,7 @@ private:	//variables
 	int m_height;
 	int m_currentChunk;			//the current chunk of thedatabase that we are operating on.  Dictates loading and saving. 
 	
-	int lastCursorPos[2];
+	//int lastCursorPos[2];
 	int PressedPos[2];
 
 };

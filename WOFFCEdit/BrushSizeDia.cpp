@@ -64,7 +64,7 @@ BOOL BrushSizeDia::OnInitDialog()
 		m_listBox.AddString(listBoxEntry.c_str());
 	}*/
 
-	BS_slider.SetRange(1, 2000, TRUE);
+	BS_slider.SetRange(100, 2000, TRUE);
 	BS_slider.SetPos(1000);
 
 	//CSliderCtrl()

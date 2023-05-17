@@ -17,6 +17,11 @@ BEGIN_MESSAGE_MAP(MFCMain, CWinApp)
 	ON_COMMAND(ID_BUTTON40020,	&MFCMain::ToolBarButtonGrid)
 	ON_COMMAND(ID_BUTTON40023,	&MFCMain::ToolBarButtonWireframe)
 	ON_COMMAND(ID_BUTTON40025,	&MFCMain::ToolBarButtonPaint)
+	ON_COMMAND(ID_BUTTON40028,	&MFCMain::ToolBarButtonMoveObject)
+	ON_COMMAND(ID_BUTTON40029,	&MFCMain::ToolBarButtonScaleObject)
+	ON_COMMAND(ID_BUTTON40032,	&MFCMain::ToolBarButtonRotateObject)
+	ON_COMMAND(ID_BUTTON40031,	&MFCMain::ToolBarFocusCamera)
+	ON_COMMAND(ID_BUTTON40036,	&MFCMain::ToolBarToggleArcballCam)
 	ON_UPDATE_COMMAND_UI(ID_INDICATOR_TOOL, &CMyFrame::OnUpdatePage)
 END_MESSAGE_MAP()
 
@@ -27,20 +32,20 @@ BOOL MFCMain::InitInstance()
 	m_pMainWnd = m_frame;
 
 
-	RECT desktop;
+
+	//declare dimension variable
+	RECT desktopDimensions;
 	// Get a handle to the desktop window
 	const HWND hDesktop = GetDesktopWindow();
-	// Get the size of screen to the variable desktop
-	GetWindowRect(hDesktop, &desktop);
-	// The top left corner will have coordinates (0,0)
-	// and the bottom right corner will have coordinates
-	// (horizontal, vertical)
+
+	// Get the size of screen to the variable desktop (or rather positions of its sides)
+	GetWindowRect(hDesktop, &desktopDimensions);
 
 
 	m_frame->Create(	NULL,
 					_T("World Of Flim-Flam Craft Editor"),
 					WS_OVERLAPPEDWINDOW,
-					CRect(0, 0, desktop.right, desktop.bottom-50),
+					CRect(0, 0, desktopDimensions.right, desktopDimensions.bottom-50),
 					NULL,
 					NULL,
 					0,
@@ -141,6 +146,22 @@ void MFCMain::ToolBarButtonSave()
 }
 
 
+void MFCMain::ToolBarToggleArcballCam() {
+
+	bool prevState = m_ToolSystem.getGame()->Camera_.arcBallCam;
+
+	m_ToolSystem.getGame()->Camera_.arcBallCam = !prevState;
+	m_ToolSystem.getGame()->Camera_.focusingCamera = !prevState;
+}
+
+void MFCMain::ToolBarFocusCamera()
+{
+
+	m_ToolSystem.getGame()->Camera_.arcBallCam = false;
+	m_ToolSystem.getGame()->Camera_.focusingCamera = true;
+}
+
+
 MFCMain::MFCMain()
 {
 }
@@ -150,24 +171,30 @@ MFCMain::~MFCMain()
 {
 }
 
+
+
+
+
 void MFCMain::ToolBarButtonRaise() {
 
-	m_ToolSystem.getGame()->setTerrainEditType(RAISE);
+	m_ToolSystem.getGame()->MyAction = RAISE_TERRAIN;
+	*(m_ToolSystem.getGame()->selectedIDobject) = -1;
 
 
 }
 void MFCMain::ToolBarButtonLower() {
 
-	m_ToolSystem.getGame()->setTerrainEditType(LOWER);
+	m_ToolSystem.getGame()->MyAction = LOWER_TERRAIN;
 
+	*(m_ToolSystem.getGame()->selectedIDobject) = -1;
 
 
 }
 
-
 void MFCMain::ToolBarButtonFlatten() {
 
-	m_ToolSystem.getGame()->setTerrainEditType(FLATTEN);
+	m_ToolSystem.getGame()->MyAction = FLATTEN_TERRAIN;
+	*(m_ToolSystem.getGame()->selectedIDobject) = -1;
 
 
 
@@ -175,19 +202,33 @@ void MFCMain::ToolBarButtonFlatten() {
 
 void MFCMain::ToolBarButtonPaint() {
 
-	m_ToolSystem.getGame()->setTerrainEditType(PAINT);
+	m_ToolSystem.getGame()->MyAction = PAINT_TERRAIN;
 
 	//modeless dialogue must be declared in the class.   If we do local it will go out of scope instantly and destroy itself
 	m_paintSelDialogue.Create(IDD_DIALOG3);	//Start up modeless
 	m_paintSelDialogue.ShowWindow(SW_SHOW);	//show modeless
-	//m_ToolBSDialogue.brushSize = m_ToolSystem.getGame()->getBrushFloat();
-
 	m_paintSelDialogue.paintType = &m_ToolSystem.getGame()->paintType;
+	*(m_ToolSystem.getGame()->selectedIDobject) = -1;
+
 }
 
 
 void MFCMain::ToolBarButtonCursor() {
-	m_ToolSystem.getGame()->setTerrainEditType(NOTHING);
+	m_ToolSystem.getGame()->MyAction = SELECT_OBJECT;
+
+}
+
+
+void MFCMain::ToolBarButtonMoveObject() {
+	m_ToolSystem.getGame()->MyAction = MOVE_OBJECT;
+
+}
+void MFCMain::ToolBarButtonScaleObject() {
+	m_ToolSystem.getGame()->MyAction = SCALE_OBJECT;
+
+}
+void MFCMain::ToolBarButtonRotateObject() {
+	m_ToolSystem.getGame()->MyAction = ROTATE_OBJECT;
 
 }
 

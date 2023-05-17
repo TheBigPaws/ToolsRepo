@@ -177,7 +177,6 @@ void ToolMain::onActionLoad()
 	m_chunk.chunk_y_size_metres = sqlite3_column_int(pResultsChunk, 3);
 	m_chunk.chunk_base_resolution = sqlite3_column_int(pResultsChunk, 4);
 	m_chunk.heightmap_path = reinterpret_cast<const char*>(sqlite3_column_text(pResultsChunk, 5));
-	//m_chunk.tex_diffuse_path = "database/data/rock.dds";
 	m_chunk.tex_diffuse_path = reinterpret_cast<const char*>(sqlite3_column_text(pResultsChunk, 6));
 	m_chunk.tex_splat_alpha_path = reinterpret_cast<const char*>(sqlite3_column_text(pResultsChunk, 7));
 	m_chunk.tex_splat_1_path = reinterpret_cast<const char*>(sqlite3_column_text(pResultsChunk, 8));
@@ -339,6 +338,7 @@ void ToolMain::UpdateInput(MSG* msg)
 			m_toolInputCommands.MouseXY[0] = GET_X_LPARAM(msg->lParam);
 			m_toolInputCommands.MouseXY[1] = GET_Y_LPARAM(msg->lParam);
 
+			
 
 			if (m_toolInputCommands.RMBdown == true) {
 				m_toolInputCommands.rotate[0] = pt_.x - PressedPos[0];
@@ -381,8 +381,12 @@ void ToolMain::UpdateInput(MSG* msg)
 	case WM_LBUTTONDOWN:	//mouse button down,  you will probably need to check when its up too
 		//set some flag for the mouse button in inputcommands
 
+		POINT pt3;
+		if (GetCursorPos(&pt3)) {
+			PressedPos[0] = pt3.x;
+			PressedPos[1] = pt3.y;
 
-		//m_toolInputCommands.LMBclicked = true;
+		}
 		m_toolInputCommands.LMBdown = true;
 
 		//ShowCursor(false);
@@ -425,10 +429,6 @@ void ToolMain::UpdateInput(MSG* msg)
 		m_toolInputCommands.right = true;
 	}
 	else m_toolInputCommands.right = false;
-	if (m_keyArray['P'])
-	{
-		m_toolInputCommands.moveObject = true;
-	}
-	else m_toolInputCommands.moveObject = false;
+
 
 }

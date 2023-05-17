@@ -52,6 +52,7 @@ void Game::Initialize(HWND window, int width, int height)
     m_mouse = std::make_unique<Mouse>();
     m_mouse->SetWindow(window);
 
+
     m_deviceResources->SetWindow(window, width, height);
 
     m_deviceResources->CreateDeviceResources();
@@ -60,7 +61,7 @@ void Game::Initialize(HWND window, int width, int height)
     m_deviceResources->CreateWindowSizeDependentResources();
     CreateWindowSizeDependentResources();
 
-
+	//m_deviceResources->WindowSizeChanged()
 
 	GetClientRect(window, &m_ScreenDimensions);
 
@@ -141,81 +142,137 @@ DirectX::SimpleMath::Vector3 Game::GetRotationFromDirection(DirectX::SimpleMath:
 }
 
 void Game::handleInput(float dt) {
-
-	//added true cause
-	if (m_displayChunk.currentEditType != NOTHING || true){
-		
-		m_displayChunk.mouseIntersect(Camera_.m_camPosition, getClickingVector());
-
-
-	}
-
 	//process input and update stuff
 	float dForward = 0.0f;
 	float dRight = 0.0f;
-	if (m_InputCommands.forward)
-	{
-		dForward += m_movespeed * dt;
+	
+	if (Camera_.focusingCamera) {
+
+		if (*selectedIDobject >= 0) {
+
+			Camera_.UpdateCameraFocus((m_displayList[*selectedIDobject].m_position), m_displayList[*selectedIDobject].m_scale.x, dt);
+		}
+		else {
+			Camera_.focusingCamera = false;
+			Camera_.arcBallCam = false;
+		}
+
 	}
-	if (m_InputCommands.back)
-	{
-		dForward -= m_movespeed * dt;
+	else {
+
+		
+		if (m_InputCommands.forward)
+		{
+			dForward += m_movespeed * dt;
+		}
+		if (m_InputCommands.back)
+		{
+			dForward -= m_movespeed * dt;
+		}
+		if (m_InputCommands.right)
+		{
+			dRight += m_movespeed * dt;
+		}
+		if (m_InputCommands.left)
+		{
+			dRight -= m_movespeed * dt;
+		}
 	}
-	if (m_InputCommands.right)
-	{
-		dRight +=  m_movespeed * dt;
-	}
-	if (m_InputCommands.left)
-	{
-		dRight -=  m_movespeed * dt;
-	}
-	if (m_InputCommands.RMBdown)
+	if (m_InputCommands.RMBdown && (!Camera_.focusingCamera || (Camera_.focusingCamera && Camera_.arcBallCam) ))
 	{
 
 		Camera_.UpdateCameraRotation(m_InputCommands.rotate[0], m_InputCommands.rotate[1], dt);
 
 	}
-	if (m_InputCommands.moveObject)
-	{
-		m_displayList[*selectedIDobject].m_position = m_displayChunk.planeIntersectPoint + m_displayChunk.planeIntersectPointNormal * m_displayList[*selectedIDobject].m_scale * 0.52f;
-		//
-		//XMVECTOR q = XMQuaternionRotationRollPitchYawFromVector(XMLoadFloat3(&m_displayChunk.planeIntersectPointNormal));
-		//XMFLOAT4 angles;`
-		//XMStoreFloat4(&angles, q);
-		m_displayList[*selectedIDobject].m_orientation = GetRotationFromDirection(m_displayChunk.planeIntersectPointNormal);
-		//m_displayList[*selectedIDobject].m_orientation = Vector3(90.0f,0.0f,0.0f);
-		//Camera_.UpdateCameraRotation(m_InputCommands.rotate[0], m_InputCommands.rotate[1], dt);
+	Camera_.UpdateCameraPosition(dForward, dRight);
 
+	if (MyAction == FLATTEN_TERRAIN || MyAction == RAISE_TERRAIN || MyAction == PAINT_TERRAIN || MyAction == LOWER_TERRAIN || MyAction == MOVE_OBJECT) {
+		m_displayChunk.mouseIntersect(Camera_.m_camPosition, getClickingVector());
 	}
-
-
 
 	if (m_InputCommands.LMBdown)
 	{
-		switch (m_displayChunk.currentEditType) {
-		case NOTHING:
-			if (!alreadyPicked) {
+
+		switch (MyAction) {
+		
+		case SELECT_OBJECT:
+			if (!alreadyPicked && MousePicking() >= 0) {
+				
 				*selectedIDobject = MousePicking();
 				alreadyPicked = true;
 			}
 			
 			break;
+		case MOVE_OBJECT:
+			
+			if ( alreadyPicked && *selectedIDobject >= 0)
+			{
+				m_displayList[*selectedIDobject].m_position = m_displayChunk.planeIntersectPoint + m_displayChunk.planeIntersectPointNormal * m_displayList[*selectedIDobject].m_scale * 0.52f;
+				m_displayList[*selectedIDobject].m_orientation = GetRotationFromDirection(m_displayChunk.planeIntersectPointNormal);
+			}
+			else if(!alreadyPicked && MousePicking() >= 0) {
+				*selectedIDobject = MousePicking();
+				alreadyPicked = true;
+			}
+			//else {
+			//	*selectedIDobject = -1;
+			//}
+			
+			break;
 
-		case RAISE:
+		case ROTATE_OBJECT:
+			if (alreadyPicked && *selectedIDobject >= 0)
+			{
+				m_displayList[*selectedIDobject].m_orientation.y += (m_InputCommands.MouseXY[0] - lastPos[0]) * 100.0f*dt;
+				m_displayList[*selectedIDobject].m_orientation.x += (m_InputCommands.MouseXY[1] - lastPos[1]) * 100.0f*dt;
+
+				
+
+			}
+			else if (!alreadyPicked && MousePicking() >= 0) {
+				*selectedIDobject = MousePicking();
+				alreadyPicked = true;
+			}
+			//else {
+			//	*selectedIDobject = -1;
+			//}
+
+			break;
+
+		case SCALE_OBJECT:
+			if (alreadyPicked && *selectedIDobject >= 0)
+			{
+				float amount = (m_InputCommands.MouseXY[1] - lastPos[1]);
+#
+				m_displayList[*selectedIDobject].m_scale.x += amount * -0.8f * dt;
+				m_displayList[*selectedIDobject].m_scale.y += amount * -0.8f * dt;
+				m_displayList[*selectedIDobject].m_scale.z += amount * -0.8f * dt;
+
+
+			}
+			else if (!alreadyPicked && MousePicking() >= 0) {
+				*selectedIDobject = MousePicking();
+				alreadyPicked = true;
+			}
+			//else {
+			//	*selectedIDobject = -1;
+			//}
+
+			break;
+		case RAISE_TERRAIN:
 			m_displayChunk.raiseGround(dt);
 			break;
-		
-		case LOWER:
+		case LOWER_TERRAIN:
 			//m_displayChunk.selectVertex(Camera_.m_camPosition, getClickingVector());
 			m_displayChunk.lowerGround(dt);
 			break;
 
-		case PAINT:
+		case PAINT_TERRAIN:
 			//m_displayChunk.selectVertex(Camera_.m_camPosition, getClickingVector());
 			m_displayChunk.paintGround(dt, paintType);
 			break;
 		
-		case FLATTEN:
+		case FLATTEN_TERRAIN:
 			//m_displayChunk.selectVertex(Camera_.m_camPosition, getClickingVector());
 			m_displayChunk.levelGround(dt);
 			break;
@@ -227,7 +284,9 @@ void Game::handleInput(float dt) {
 	}
 	else {alreadyPicked = false;}
 
-	Camera_.UpdateCameraPosition(dForward, dRight);
+
+	lastPos[0] = m_InputCommands.MouseXY[0];
+	lastPos[1] = m_InputCommands.MouseXY[1];
 
 
 }
@@ -298,7 +357,7 @@ void Game::drawNormals()
 	context->IASetInputLayout(m_batchInputLayout.Get());
 	//render circle 
 	m_batch->Begin();
-
+	
 
 	//show normals as calc by matt
 	if (false) {
@@ -339,6 +398,12 @@ void Game::drawNormals()
 }
 
 void Game::drawCircleOnTerrain(float radius) {
+
+
+	if (MyAction != FLATTEN_TERRAIN && MyAction != RAISE_TERRAIN && MyAction != PAINT_TERRAIN && MyAction != LOWER_TERRAIN) {
+		return;
+	}
+
 	auto context = m_deviceResources->GetD3DDeviceContext();
 	m_batchEffect->Apply(context);
 	context->IASetInputLayout(m_batchInputLayout.Get());
@@ -411,6 +476,57 @@ void Game::drawCircleOnTerrain(float radius) {
 }
 
 
+void Game::drawUIText() {
+	//CAMERA POSITION ON HUD
+	m_sprites->Begin();
+	WCHAR   Buffer[256];
+
+
+	//std::wstring var = L"Cam X: " + std::to_wstring(Camera_.m_camOrientation.x) + L"Cam Y: " + std::to_wstring(Camera_.m_camOrientation.y) + L"Cam Z: " + std::to_wstring(Camera_.m_camOrientation.z);
+	//m_font->DrawString(m_sprites.get(), var.c_str(), XMFLOAT2(0, 100), Colors::Yellow);
+	//
+	//std::wstring var2 = L"Mouse X: " + std::to_wstring(m_InputCommands.MouseXY[0]) + L"Mouse Y: " + std::to_wstring(m_InputCommands.MouseXY[1]);
+	//m_font->DrawString(m_sprites.get(), var2.c_str(), XMFLOAT2(100, 100), Colors::Yellow);
+
+	std::wstring var3;
+	switch (MyAction)
+	{
+	case RAISE_TERRAIN:
+		var3 = L"Selected Action: Raise Terrain";
+		break;
+	case LOWER_TERRAIN:
+		var3 = L"Selected Action: Lower Terrain";
+		break;
+	case FLATTEN_TERRAIN:
+		var3 = L"Selected Action: Flatten Terrain";
+		break;
+	case PAINT_TERRAIN:
+		var3 = L"Selected Action: Paint Terrain";
+		break;
+	case SELECT_OBJECT:
+		var3 = L"Selected Action: Object Picking";
+		break;
+	case MOVE_OBJECT:
+		var3 = L"Selected Action: Move Object";
+		break;
+	case SCALE_OBJECT:
+		var3 = L"Selected Action: Scale Object";
+		break;
+	case ROTATE_OBJECT:
+		var3 = L"Selected Action: Rotate Object";
+		break;
+	default:
+		break;
+	}
+
+	if (Camera_.arcBallCam) {
+		var3 += L", ARCBALL Camera ON";
+	}
+	m_font->DrawString(m_sprites.get(), var3.c_str(), XMFLOAT2(0,0), Colors::White);
+   
+	m_sprites->End();
+}
+
 #pragma region Frame Render
 // Draws the scene.
 void Game::Render()
@@ -439,16 +555,8 @@ void Game::Render()
 		drawNormals();
 	}
 
-	if (m_displayChunk.currentEditType != NOTHING) {
-		drawCircleOnTerrain(m_displayChunk.terrainEditRadius - 0.1f + sin(timeIt * 2.0f) * 0.2f);
-	}
 
-	//CAMERA POSITION ON HUD
-	m_sprites->Begin();
-	WCHAR   Buffer[256];
-	std::wstring var = L"Cam X: " + std::to_wstring(Camera_.m_camPosition.x) + L"Cam Z: " + std::to_wstring(Camera_.m_camPosition.z);
-	m_font->DrawString(m_sprites.get(), var.c_str() , XMFLOAT2(100, 10), Colors::Yellow);
-	m_sprites->End();
+
 
 	//RENDER OBJECTS FROM SCENEGRAPH
 	int numRenderObjects = m_displayList.size();
@@ -506,10 +614,28 @@ void Game::Render()
 		context->RSSetState(m_states->Wireframe());		//uncomment for wireframe
 	}
 
+	
+
 	//Render the batch,  This is handled in the Display chunk becuase it has the potential to get complex
 	m_displayChunk.RenderBatch(m_deviceResources);
 
-    m_deviceResources->Present();
+
+
+	//draw the circle indicating the terrain edit brush
+	drawCircleOnTerrain(m_displayChunk.terrainEditRadius - 0.1f + sin(timeIt * 2.0f) * 0.2f);
+
+
+
+	//draw UI text
+	drawUIText();
+
+
+
+	
+
+
+
+	m_deviceResources->Present();
 }
 
 // Helper method to clear the back buffers.
@@ -904,14 +1030,6 @@ DirectX::SimpleMath::Vector3 Game::getClickingVector() {
 
 }
 
-void Game::setTerrainEditType(TerrainEditType setTo) {
-	m_displayChunk.currentEditType = setTo;
-}
-
-
-TerrainEditType Game::getTerrainEditType() {
-	return m_displayChunk.currentEditType;
-}
 
 int Game::MousePicking() {
 

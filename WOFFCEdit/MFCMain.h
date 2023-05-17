@@ -33,7 +33,7 @@ private:
 	int m_width;		
 	int m_height;
 	
-	//Interface funtions for menu and toolbar etc requires
+	//Interface funtions for menu and toolbar 
 	afx_msg void MenuFileQuit();
 	afx_msg void MenuFileSaveTerrain();
 	afx_msg void MenuEditSelect();
@@ -47,8 +47,14 @@ private:
 	afx_msg	void ToolBarButtonRaise();
 	afx_msg	void ToolBarButtonLower();
 	afx_msg	void ToolBarButtonFlatten();
-
 	afx_msg	void ToolBarButtonPaint();
+
+	afx_msg	void ToolBarButtonMoveObject();
+	afx_msg	void ToolBarButtonScaleObject();
+	afx_msg	void ToolBarButtonRotateObject();
+	afx_msg	void ToolBarFocusCamera();
+	afx_msg	void ToolBarToggleArcballCam();
+
 
 	DECLARE_MESSAGE_MAP()	// required macro for message map functionality  One per class
 };

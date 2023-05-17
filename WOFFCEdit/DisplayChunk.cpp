@@ -75,7 +75,6 @@ void DisplayChunk::RenderBatch(std::shared_ptr<DX::DeviceResources>  DevResource
 			//bool changeBatches = false;
 			index_ = 2 * ((TERRAINRESOLUTION * i) + j);
 
-			//m_batch->DrawQuad(m_terrainGeometry[i][j], m_terrainGeometry[i][j + 1], m_terrainGeometry[i + 1][j + 1], m_terrainGeometry[i + 1][j]); //bottom left bottom right, top right top left.
 
 			if (terrainTexturesHolder_IDCS[index_] != lastTXT) {
 				m_batch->End();
@@ -251,13 +250,21 @@ void DisplayChunk::mouseIntersect(DirectX::SimpleMath::Vector3 camPos, DirectX::
 Vector2 DisplayChunk::getIndicesOfTriangleUnderPos(Vector3 pos) {
 	Vector2 retV;
 
-	//j*m_terrainPositionScalingFactor-(0.5*m_terrainSize)
-	int i_ = (pos.z + m_terrainSize * 0.5) / m_terrainPositionScalingFactor;
+	retV.x = (pos.z + m_terrainSize * 0.5) / m_terrainPositionScalingFactor;
+	retV.y = (pos.x + m_terrainSize * 0.5) / m_terrainPositionScalingFactor;
 
-	int j_ = (pos.x + m_terrainSize*0.5)/ m_terrainPositionScalingFactor;
-
-	retV.x = i_;
-	retV.y = j_;
+	if (retV.x >= TERRAINRESOLUTION) {
+		retV.x = TERRAINRESOLUTION-1;
+	}
+	if (retV.y >= TERRAINRESOLUTION) {
+		retV.y = TERRAINRESOLUTION-1;
+	}
+	if (retV.x < 0) {
+		retV.x = 0;
+	}
+	if (retV.y < 0) {
+		retV.y = 0;
+	}
 
 	return retV;
 }

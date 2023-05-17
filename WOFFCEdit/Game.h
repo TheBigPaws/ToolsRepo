@@ -15,7 +15,7 @@
 #include <vector>
 
 
-//class ToolMain;
+enum ActionType { RAISE_TERRAIN, LOWER_TERRAIN, FLATTEN_TERRAIN, PAINT_TERRAIN, SELECT_OBJECT, MOVE_OBJECT,SCALE_OBJECT, ROTATE_OBJECT};
 
 
 // A basic game implementation that creates a D3D11 device and
@@ -49,7 +49,6 @@ public:
 	void OnResuming();
 	void OnWindowSizeChanged(int width, int height);
 
-	void drawCircleOnTerrain(float radius);
 	DirectX::SimpleMath::Vector3 GetRotationFromDirection(DirectX::SimpleMath::Vector3 UpDir);
 
 	//tool specific
@@ -58,27 +57,39 @@ public:
 	void SaveDisplayChunk(ChunkObject *SceneChunk);	//saves geometry et al
 	void ClearDisplayList();
 
-	void handleInput(float dt);
 
+	//------------  Draw functions
 	void drawNormals();
+	void drawCircleOnTerrain(float radius);
+	void drawUIText();
 
+
+	//------------  Input handling functions
+	void handleInput(float dt);
 	int MousePicking();
 	DirectX::SimpleMath::Vector3 getClickingVector();
 
-	int  * selectedIDobject;
-	bool renderInWireframe = false;
-	bool alreadyPicked = false;
-	void setTerrainEditType(TerrainEditType setTo);
-	TerrainEditType getTerrainEditType();
+	
 
+	//------------ pointer function
 	float * getBrushFloat(){
 		return &(m_displayChunk.terrainEditRadius);
 	}
 
+	//------------ Game-Relevant variables
+	ActionType MyAction = SELECT_OBJECT;
 	float timeIt = 0.0f;
+	bool renderInWireframe = false;
+	bool alreadyPicked = false;
 	bool shouldShowNormals = true;
-
+	int* selectedIDobject;
 	int paintType = 1;
+	int lastPos[2] = { 0,0 };
+	int lastID;
+
+	
+	//------------ Camera Class
+	CameraMain Camera_;
 #ifdef DXTK_AUDIO
 	void NewAudioDevice();
 #endif
@@ -86,12 +97,14 @@ public:
 
 private:
 
+
+
 	void Update(DX::StepTimer const& timer);
 
 	void CreateDeviceDependentResources();
 	void CreateWindowSizeDependentResources();
 
-	void XM_CALLCONV DrawGrid(DirectX::FXMVECTOR origin, float cellSize, float gridExtent);
+	void XM_CALLCONV DrawGrid(DirectX::FXMVECTOR origin, float cellSize, float gridExtent); // custom draw grid function
 
 	//tool specific
 	std::vector<DisplayObject>			m_displayList;
@@ -104,8 +117,7 @@ private:
 	RECT		m_ScreenDimensions;
 
 
-	//camera
-	CameraMain Camera_;
+	
 
 	//control variables
 	bool m_grid;							//grid rendering on / off

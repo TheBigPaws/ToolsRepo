@@ -7,8 +7,6 @@
 //geometric resoltuion - note,  hard coded.
 #define TERRAINRESOLUTION 128
 
-enum TerrainEditType{ RAISE,LOWER,FLATTEN,NOTHING, PAINT};
-
 
 using namespace DirectX::SimpleMath;
 
@@ -27,7 +25,6 @@ public:
 	bool isIntersecting = false;
 
 	//------------  Custom Terrain Edit Variables
-	TerrainEditType currentEditType = NOTHING;
 	float terrainEditRadius = 10.0f;
 	float terrainEditSpeed = 10.0f;
 
@@ -51,7 +48,6 @@ public:
 
 	//------------  Custom Utility Functions
 	Vector2 getIndicesOfTriangleUnderPos(Vector3 pos);
-	//Vector3 getNormalAtPos(Vector3 pos);
 	float getYatPos(Vector3 pos_);
 	void mouseIntersect(Vector3 camPos, Vector3 mouseVector);
 	bool RayIntersectsTriangle(Vector3 rayOrigin, Vector3 rayVector, Vector3 v1_t, Vector3 v2_t, Vector3 v3_t, Vector3& outIntersectionPoint); // <- https://en.wikipedia.org/wiki/M%C3%B6ller%E2%80%93Trumbore_intersection_algorithm
@@ -69,6 +65,7 @@ private:
 	float	m_textureCoordStep;			//step in texture coordinates between each vertex row / column
 	float   m_terrainPositionScalingFactor;	//factor we multiply the position by to convert it from its native resolution( 0- Terrain Resolution) to full scale size in metres dictated by m_Terrainsize
 	
+	//chunk data
 	std::string m_name;
 	int m_chunk_x_size_metres;
 	int m_chunk_y_size_metres;
