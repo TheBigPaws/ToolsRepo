@@ -30,8 +30,9 @@ public:
 	DirectX::SimpleMath::Vector3		m_camRight;
 	float m_camRotRate;
 
-	//------------  Camera Mode Variables
+	//------------  Focused Camera Mode Variables
 	bool arcBallCam = false;
 	bool focusingCamera = false;
+	float ArcBallDistance = 5.0f;
 };
 

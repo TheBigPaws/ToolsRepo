@@ -81,7 +81,7 @@ public:
 	float timeIt = 0.0f;
 	bool renderInWireframe = false;
 	bool alreadyPicked = false;
-	bool shouldShowNormals = true;
+	bool shouldShowNormals = false;
 	int* selectedIDobject;
 	int paintType = 1;
 	int lastPos[2] = { 0,0 };

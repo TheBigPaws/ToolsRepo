@@ -7,6 +7,11 @@ struct InputCommands
 	bool right;
 	bool left;
 
+	bool focus;
+	bool zoomOut_AB;
+	bool zoomIn_AB;
+
+
 	int rotate[2];
 
 	int MouseXY[2];

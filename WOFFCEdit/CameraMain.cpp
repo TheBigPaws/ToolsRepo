@@ -87,28 +87,40 @@ void CameraMain::UpdateCameraPosition(float Dforward, float dRight){
 void CameraMain::UpdateCameraFocus(Vector3 objectPos, float scale, float dt)
 {
 
+
+	if (scale <= 0.0f) {
+		return;
+	}
+
+
 	//define necessary variables
-	float endDistance = scale * 4.0f;
-	Vector3 Destination = objectPos - m_camLookDirection * endDistance;
-	Vector3 moveV = (Destination - m_camPosition);
-	float nowDist = moveV.Length();
-	float speed_ = nowDist;
-	if (speed_ < 1.0f) { speed_ = 1.0f; }
-	moveV.Normalize();
-	float setTH = 0.05f;
+	float desired_distance_from_object = scale * ArcBallDistance;
+	Vector3 desired_camera_location = objectPos - m_camLookDirection * desired_distance_from_object;
+	Vector3 total_todo_movement_vector = (desired_camera_location - m_camPosition);
+	float current_distance_from_DCL = total_todo_movement_vector.Length();
+	
+	float focus_speed = current_distance_from_DCL + 2.0f;
+	if (focus_speed < 1.0f) { focus_speed = 1.0f; }
+	
+	
+	float immediate_set_threshold = 0.05f;
 
 	if (!arcBallCam) {
 		//exit condition for only focusing
 		focusingCamera = false;
 	}
+	else {
+		focus_speed *= current_distance_from_DCL;
+	}
 
-	if (nowDist > setTH) {
-		m_camPosition += dt * moveV * 5.0f * nowDist;
+	total_todo_movement_vector.Normalize();
+	if (current_distance_from_DCL > immediate_set_threshold) {
+		m_camPosition += dt * total_todo_movement_vector * 5.0f * focus_speed;
 		focusingCamera = true;		//reset of the exit condition if the destination hasn't been reached yet
 
 	}
 	else {
-		m_camPosition = Destination;
+		m_camPosition = desired_camera_location;
 	}
 }
 		

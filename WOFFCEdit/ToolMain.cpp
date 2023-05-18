@@ -19,6 +19,10 @@ ToolMain::ToolMain()
 	m_toolInputCommands.back		= false;
 	m_toolInputCommands.left		= false;
 	m_toolInputCommands.right		= false;
+
+	m_toolInputCommands.focus		= false;
+	m_toolInputCommands.zoomIn_AB		= false;
+	m_toolInputCommands.zoomOut_AB	    = false;
 	
 	m_toolInputCommands.rotate[0] = 0;
 	m_toolInputCommands.rotate[0] = 0;
@@ -30,10 +34,6 @@ ToolMain::ToolMain()
 	m_toolInputCommands.LMBdown = false;
 
 
-	//m_toolInputCommands.LMBclicked = false;
-
-	int tlX = 0;
-	int tlY = 0;
 }
 
 
@@ -312,6 +312,7 @@ void ToolMain::UpdateInput(MSG* msg)
 {
 
 
+
 	//m_toolInputCommands.LMBclicked = false;
 
 
@@ -320,12 +321,25 @@ void ToolMain::UpdateInput(MSG* msg)
 		//Global inputs,  mouse position and keys etc
 	case WM_KEYDOWN:
 		m_keyArray[msg->wParam] = true;
+		if (msg->wParam == VK_UP) {
+			m_toolInputCommands.zoomIn_AB = true;
+		}
+		else if (msg->wParam == VK_DOWN) {
+			m_toolInputCommands.zoomOut_AB = true;
+		}
 		break;
 
 	case WM_KEYUP:
 		m_keyArray[msg->wParam] = false;
+		
+		if (msg->wParam == VK_UP) {
+			m_toolInputCommands.zoomIn_AB = false;
+		}else if (msg->wParam == VK_DOWN) {
+			m_toolInputCommands.zoomOut_AB = false;
+		}
 		break;
 
+	
 	case WM_MOUSEMOVE:
 
 
@@ -430,5 +444,9 @@ void ToolMain::UpdateInput(MSG* msg)
 	}
 	else m_toolInputCommands.right = false;
 
-
+	if (m_keyArray['F'])
+	{
+		m_toolInputCommands.focus = true;
+	}
+	else m_toolInputCommands.focus = false;
 }

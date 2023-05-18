@@ -142,24 +142,21 @@ DirectX::SimpleMath::Vector3 Game::GetRotationFromDirection(DirectX::SimpleMath:
 }
 
 void Game::handleInput(float dt) {
-	//process input and update stuff
+	
 	float dForward = 0.0f;
 	float dRight = 0.0f;
 	
-	if (Camera_.focusingCamera) {
+	//when rmb is down and focusing is off update rot
+	if (m_InputCommands.RMBdown && (!Camera_.focusingCamera || (Camera_.focusingCamera && Camera_.arcBallCam)))
+	{
 
-		if (*selectedIDobject >= 0) {
-
-			Camera_.UpdateCameraFocus((m_displayList[*selectedIDobject].m_position), m_displayList[*selectedIDobject].m_scale.x, dt);
-		}
-		else {
-			Camera_.focusingCamera = false;
-			Camera_.arcBallCam = false;
-		}
+		Camera_.UpdateCameraRotation(m_InputCommands.rotate[0], m_InputCommands.rotate[1], dt);
 
 	}
-	else {
+	//movement blocked when camera is being focused
+	if(!Camera_.focusingCamera){
 
+		
 		
 		if (m_InputCommands.forward)
 		{
@@ -178,14 +175,24 @@ void Game::handleInput(float dt) {
 			dRight -= m_movespeed * dt;
 		}
 	}
-	if (m_InputCommands.RMBdown && (!Camera_.focusingCamera || (Camera_.focusingCamera && Camera_.arcBallCam) ))
-	{
-
-		Camera_.UpdateCameraRotation(m_InputCommands.rotate[0], m_InputCommands.rotate[1], dt);
-
-	}
 	Camera_.UpdateCameraPosition(dForward, dRight);
 
+	//update arcball distance
+	if (m_InputCommands.zoomIn_AB && Camera_.ArcBallDistance > 1.0f) {
+		Camera_.ArcBallDistance -= dt * 3.0f;
+	}
+	if (m_InputCommands.zoomOut_AB) {
+		Camera_.ArcBallDistance += dt * 3.0f;
+	}
+
+	if (m_InputCommands.focus && !m_InputCommands.RMBdown) {
+		Camera_.focusingCamera = true;
+		Camera_.arcBallCam = false;
+	}
+
+
+	
+	//update intersect
 	if (MyAction == FLATTEN_TERRAIN || MyAction == RAISE_TERRAIN || MyAction == PAINT_TERRAIN || MyAction == LOWER_TERRAIN || MyAction == MOVE_OBJECT) {
 		m_displayChunk.mouseIntersect(Camera_.m_camPosition, getClickingVector());
 	}
@@ -263,17 +270,14 @@ void Game::handleInput(float dt) {
 			m_displayChunk.raiseGround(dt);
 			break;
 		case LOWER_TERRAIN:
-			//m_displayChunk.selectVertex(Camera_.m_camPosition, getClickingVector());
 			m_displayChunk.lowerGround(dt);
 			break;
 
 		case PAINT_TERRAIN:
-			//m_displayChunk.selectVertex(Camera_.m_camPosition, getClickingVector());
 			m_displayChunk.paintGround(dt, paintType);
 			break;
 		
 		case FLATTEN_TERRAIN:
-			//m_displayChunk.selectVertex(Camera_.m_camPosition, getClickingVector());
 			m_displayChunk.levelGround(dt);
 			break;
 
@@ -298,12 +302,29 @@ void Game::Update(DX::StepTimer const& timer)
 {
 	//TODO  any more complex than this, and the camera should be abstracted out to somewhere else
 	//camera motion is on a plane, so kill the 7 component of the look direction
-	timeIt += timer.GetElapsedSeconds();
+	
+	float dt = timer.GetElapsedSeconds();
+	timeIt += dt;
     
 
+	//handle cam focus - could be made as a func + pointer in cam class in future work
+	if (Camera_.focusingCamera) {
 
+		//pointer error fix
+		if (*selectedIDobject >= 0) {
+
+			Camera_.UpdateCameraFocus((m_displayList[*selectedIDobject].m_position), m_displayList[*selectedIDobject].m_scale.x, dt);
+		}
+		else {
+			Camera_.focusingCamera = false;
+			Camera_.arcBallCam = false;
+		}
+
+	}
 
 	handleInput(timer.GetElapsedSeconds());
+
+
 
 	
 
@@ -358,9 +379,7 @@ void Game::drawNormals()
 	//render circle 
 	m_batch->Begin();
 	
-
-	//show normals as calc by matt
-	if (false) {
+	//provided function
 		for (size_t i = 0; i < TERRAINRESOLUTION; i++)
 		{
 			for (size_t j = 0; j < TERRAINRESOLUTION; j++)
@@ -379,7 +398,7 @@ void Game::drawNormals()
 				m_batch->DrawLine(v1_, v2_);
 			}
 		}
-	}
+	
 
 
 	//show triangle normal
@@ -389,7 +408,7 @@ void Game::drawNormals()
 
 		XMVECTORF32 NormalC = { m_displayChunk.planeIntersectPointNormal.x,m_displayChunk.planeIntersectPointNormal.y, m_displayChunk.planeIntersectPointNormal.z,1.0f };
 		VertexPositionColor INL1(XMVECTORF32{ PIP.x,PIP.y,PIP.z }, NormalC);
-		VertexPositionColor INL2(XMVECTORF32{ PIP.x + PIN.x * 3,PIP.y + PIN.y * 3,PIP.z + PIN.z * 3 }, NormalC);
+		VertexPositionColor INL2(XMVECTORF32{ PIP.x + PIN.x * 5,PIP.y + PIN.y * 5,PIP.z + PIN.z * 5 }, NormalC);
 
 		m_batch->DrawLine(INL1, INL2);
 	}
